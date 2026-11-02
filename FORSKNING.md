@@ -535,6 +535,47 @@ om den drivs kontinuerligt i 2 h. Med termostat/PWM, elektronikspillvärme i top
 ~1–2 Wh — väl inom 2S LiPo-budgeten (7,4–11 Wh). Kör man tvärtom kontinuerligt 2 W i
 2 h (4 Wh) hamnar batteriet nära gränsen → planera för standby-läge.
 
+## 4.11.4 Hur många kJ kylning behövs? (kalla plattans kylbudget)
+
+Den kalla plattan måste svälja allt värmeläckage som når den under **hela tiden från
+nedkylning till startens slut** (vila + flygning). Kylbehovet i kJ är därför:
+
+```
+E_kyl [kJ] = värmeläckage [W] × tid [s] / 1000
+```
+
+**Med dokumentets skattade läckage (~1,5–3 W, §4.11.2a):**
+
+| Tid kyla ska hålla | Vid 1,5 W | Vid 2 W | Vid 3 W |
+|---|---|---|---|
+| 1 h | 5,4 kJ | 7,2 kJ | 10,8 kJ |
+| 2 h | 10,8 kJ | 14,4 kJ | 21,6 kJ |
+| 3 h | 16,2 kJ | 21,6 kJ | 32,4 kJ |
+| 4 h | 21,6 kJ | 28,8 kJ | 43,2 kJ |
+
+**Vad det innebär i PCM-massa** (med E-26: 265 kJ/kg, §4.10.3):
+
+| Kylbehov | E-26-massa | Realistiskt scenario |
+|---|---|---|
+| ~15 kJ | ~57 g | 2 h vid 2 W |
+| ~20 kJ | ~76 g | 2–3 h vid 2 W / 1 h vid 3 W |
+| ~30 kJ | ~113 g | 3–4 h vid 2 W (robust) |
+| ~43 kJ | ~160 g | 4 h vid 3 W (extremfall) |
+
+**Dimensionerande rekommendation:**
+- **Sikta på 20–30 kJ användbar kyla → ~80–115 g E-26/HS26N.** Det täcker den
+  sannolika verkligheten (2–3 h vila vid ≤2 W läckage + 2 min flygning) med marginal.
+- **Viktigt:** räkna med en säkerhetsfaktor — PCM:ns *latenta* värme (265 kJ/kg) är den
+  teoretiska siffran; i praktiken läcker kyla i frånkopplingstätningar, genom
+  påsens väggar och vid ojämn kontakt. Anta ~**70–80 % av det nominella värdet** som
+  användbart → välj PCM-massa för (behov / 0,75).
+- Om tidslinjen från arrangören (fråga 3) säger **≤1 h vila** räcker 60 g; säger den
+  **4 h** behövs 120–160 g. Därför är frågan om vilans längd den **enda siffran som
+  slutgiltigt låser PCM-massan.**
+
+**Målformulering för valet:** "kylbudgeten ska vara ≥ (värmeläckage W) × (vile-tid s +
+flygtid s), med 70–80 % nyttjandegrad av PCM:ns latenta värme."
+
 ## 5. Alkoholen — isopropanol vs etanol vs metanol, och tillståndsfrågan
 
 | Ämne | Flampunkt | Botten-temp som krävs | För/nackdelar |
