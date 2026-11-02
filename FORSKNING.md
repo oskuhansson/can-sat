@@ -304,6 +304,94 @@ passivt under flygning. Kraftigare gradient → kan använda IPA. Men: kräver t
 till nätström/powerbank vid padden och bryter delvis mot "2 h på batteri" — fråga
 arrangören.
 
+## 6.4 RGB-strobe — tidsupplöst spårfotografering (idé: RGB-strobe-utlöst bildtagning)
+
+*Idé från laget: en ljusdetektor i kammaren detekterar när en partikel passerar,
+varefter RGB-strobar blixtrar en i taget under en enda kamerabild — så att spårets
+utveckling (födelse → tillväxt → sjunkande droppar) syns som rött, grönt och blått
+i samma bild.*
+
+**Kortbedömning: idén är både genomförbar och vetenskapligt stark — med en viktig
+korrigering av tidskalan: millisekunder, inte mikrosekunder.**
+
+### 6.4.1 Händelseförloppet — varför µs är fel tidskala
+
+| Tid efter passage | Vad händer | Rörelse |
+|---|---|---|
+| 0 (ns-skala) | Myonen passerar, ~230 joner/cm längs banan | ~c → ingen bildbar rörelse |
+| ~10–200 ms | Droppar växer till synlig storlek (r²∝t, [Barrett & Germain 1947](https://pubs.aip.org/aip/rsi/article/18/2/84/296528/Growth-of-Drops-Formed-in-a-Wilson-Cloud-Chamber)) | ~stillastående |
+| ~50–500 ms | Spåret är synligt; droppar faller med Stokes sluthastighet | **~1 cm/s vid r=10 µm**, r²∝v → ~9 cm/s vid r=30 µm ([Blackett 1934](https://royalsocietypublishing.org/rspa/article-pdf/146/857/281/28637/rspa.1934.0154.pdf), [UVic-ekvationer](https://particle.phys.uvic.ca/~jalbert/chamber.pdf)) |
+| ~0,5–1 s | Droppar sjunkit ur det känsliga skiktet; skiktet återhämtar sig på några sekunder | — |
+
+En 10 µm-droppe faller **10 nm per µs** — på mikrosekundnivå står allt helt stilla
+(och partikeln själv avger dessutom inget ljus). *Det* µs-upplösning är bra för är
+att frysa varje blixt (ingen rörelseoskärpa) — men den information som RGB-färgerna
+ska visa (tillväxt + sjunkande droppar) utspelar sig på **10–500 ms**.
+
+### 6.4.2 Ljusdetektorn — det fysikaliskt viktigaste valet
+
+**Partikeln kan INTE detekteras av ljus** — den avger inte ljus i kammaren. Det
+ljusdetektorn kan se är det spridda ljuset från dropparna *efter* att de vuxit
+(~10–100 ms efter passage). Två möjligheter:
+
+- **(a) Fotodiod/SiPM i mörkerfält** (rekommenderas, enkelt): en fotodiod med lins
+  tittar på det känsliga skiktet bakifrån/ovanifrån; när spåret uppstår ökar det
+  spridda ljuset abrupt → komparator → trigger. Fångar spåret redan i sin tidiga
+  fas. Latens ~ms räcker gott (spåret lever ~0,1–0,5 s).
+- **(b) Scintillator-matta + SiPM** (avancerat, historiskt!): två tunna
+  scintillatorplattor över/under kammaren i koincidens detekterar **partikeln
+  själv** på ns-skala — exakt den metod Blackett & Occhialini uppfann 1934
+  ("counter-controlled cloud chamber", [Leone 2011, AJP](https://pubs.aip.org/aapt/ajp/article/79/5/454/1057670/Particles-that-take-photographs-of-themselves-The),
+  [Blackett 1934](https://royalsocietypublishing.org/rspa/article-pdf/146/857/281/28637/rspa.1934.0154.pdf))
+  och som användes för att upptäcka myonen 1937. Ger spåret från allra första
+  tillväxtstart och **dubblerar dessutom som partikelräknare** (myonmätning!).
+  Kostar ~30–60 € och ~15 g extra — värt att utreda som upgrade.
+
+Tips: låt triggerljuset vara en **separat IR-LED + IR-fotodiod** — IR syns inte i
+kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
+
+### 6.4.3 Strobar och kamera — praktiskt utförande
+
+- **RGB-strobar:** tre högströms-LED (röd ~660 nm, grön ~525 nm, blå ~450 nm, alltså
+  inga fosfor-vita LED — fosforn eftersläpar µs-skala!). Överdriv 10–50×: LED klarar
+  pulsströmmar på 10–200 A i µs–ms utan skada ([Wilson et al. 2014](https://doi.org/10.1007/s12650-014-0220-7),
+  [frozentime.se-blixtbygget](http://frozentime.se/ljus/high_speed_leds.html) — 5 µs
+  blixtar, RGB-filtrerade, med exakt den här metoden för att filma 10 µm-droppar!).
+  Energi per händelse: ~0,1 J/färg → **~0,1 W i snitt** vid 10 spår/min. Försumbar.
+  Kondensatorbank + MOSFET-drivare; skärma/EAV-skydda radion.
+- **Sekvens:** R@t=0, G@t+20–50 ms, B@t+40–100 ms, pulsbredd 0,1–1 ms (fryser
+  rörelsen: 1 cm/s × 1 ms = 10 µm oskärpa ≈ pixel). Tillväxt + fall ger tydliga
+  färgförskjutningar på pixelnivå.
+- **Kamera:** en exponering på ~150–300 ms som täcker hela RGB-sekvensen ger EN bild
+  med tre färgsnapshot. Varning: rullande slutare (rolling shutter) gör att blixtarna
+  hamnar på olika rader → "regnbågsband" — antingen synka blixtarna mot slutarens
+  radfart eller (enklast) ta **3 korta exponeringar, en per färg**, och
+  sammanfoga i programvara efteråt. Kameran behöver bara ~20 fps; spåret lever kvar
+  över flera bildrutor.
+- **Fallback (ännu enklare):** ingen trigger alls — cykla RGB kontinuerligt synkat
+  med kamerans bildrutor och välj spårbilder i efterhand. Fungerar alltid, men ger
+  mer data att sortera.
+
+### 6.4.4 Vetenskapligt utbyte — bättre än en vanlig kammare
+
+1. **Tidsupplöst spårutveckling i EN bild:** rött = ungt spår (små droppar),
+   grönt = tillväxt, blått = sjunkna/längre hållna droppar.
+2. **Mätbar fysik:** färgförskjutningen mellan kanalerna ger dropparnas fallhastighet
+   → via Stokes lag → **droppstorlek** → indirekt skattning av övermättnaden.
+3. **Myonräkning** (om scintillatorn version (b)): kompletterar kammaren som detektor.
+4. Data per händelse = EN liten bild i stället för videoström — passar CanSats
+   begränsade lagring/radio perfekt.
+
+### 6.4.5 Risker
+
+- **Falska triggers** (damm, vibrationer, ljusläckage — burken gungar under
+  fallskärmen!): grindtriggern med accelerometern (endast aktiv under stabil nedfärd)
+  och hysteres på komparatorn.
+- **Rolling shutter-banding** — se ovan; testa på marken med en thoriumstav/radonkälla.
+- **IR-störning:** kontrollera att IR-triggen inte läcker in i kamerans färgkanaler.
+- Genomför **marktest på skolbänken först**: thoriumstav (svetsmunstycke) eller
+  radon i källaren ger rikliga spår att öva triggerns tröskel och bildsekvensen på.
+
 ## 7. Frågor att ställa arrangören (innan designen låses)
 
 1. Får vi flyga en **förseglad kammare med ≤ 10 ml etanol/isopropanol** om vi lämnar
@@ -402,3 +490,9 @@ arrangören.
 - [Radebe & Huan 2023, "Low-cost eutectic salts for cold storage" (J. Energy Storage — NaCl ~-21 °C, ~228 kJ/kg)](https://www.sciencedirect.com/science/article/pii/S2352152X23003572)
 - [Rubitherm SP-seriens PCM (saltvatten, -21…-50 °C)](https://www.rubitherm.eu/en/productcategory/anorganische-pcm-sp)
 - [CanSat Mission Guide 2026 (internationella regler: värmetest m.m.)](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf)
+- [Barrett & Germain 1947, "Growth of Drops Formed in a Wilson Cloud Chamber" (dropptillväxt r²∝t)](https://pubs.aip.org/aip/rsi/article/18/2/84/296528/Growth-of-Drops-Formed-in-a-Wilson-Cloud-Chamber)
+- [Blackett 1934, "On the technique of the counter controlled cloud chamber" (fallhastighet ~1 cm/s, koincidensutlösning)](https://royalsocietypublishing.org/rspa/article-pdf/146/857/281/28637/rspa.1934.0154.pdf)
+- [Leone 2011, "Particles that take photographs of themselves" (AJP — triggad kammare, historia)](https://pubs.aip.org/aapt/ajp/article/79/5/454/1057670/Particles-that-take-photographs-of-themselves-The)
+- [UVic, "Cloud Chamber Equations" (Bethe-Bloch, Stokes, tillväxtekvation)](https://particle.phys.uvic.ca/~jalbert/chamber.pdf)
+- [Wilson et al. 2014, "Performance evaluation of an overdriven LED for high-speed schlieren imaging" (LED-överdrivning 10–200 A)](https://doi.org/10.1007/s12650-014-0220-7)
+- [Frozentime Images/Uppsala, "High-speed LED flashgun" (RGB-filtrerade µs-LED-blixtar på 10 µm-droppar)](http://frozentime.se/ljus/high_speed_leds.html)
