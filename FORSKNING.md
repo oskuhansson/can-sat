@@ -54,6 +54,61 @@ Fysiken: [Thesis, Detection of particles with a cloud chamber (UPV/EHU)](http://
   **låg och bred** (petriskål-geometri), inte hög.
 - Mörk botten, sidobelysning (LED) med snett infall, kamera ovanför/sidan.
 
+### 3.1 Hur liten kan kammaren göras? (storleksanalys)
+
+**Fysikens egentliga gräns är inte tekniken utan det känsliga skiktet och
+träfffrekvensen:**
+
+- **Höjden** bestäms av det övermättade (känsliga) skiktet, som är ~2–4 cm
+  i små kammare (Wayne State: 2 cm liten, 4 cm stor; U. Mons: ~5 cm). Skiktet
+  ska vara högre än kammarvolymens "döda" delar, men konvektion och dimma växer
+  med höjden. Teoretiskt minimiavstånd från alkoholkälla (tråg) till känsligt
+  skikt ≈ 1 cm (Bevan 1954), praktiskt behövs ~2–4 cm luft ovanför plattan för
+  jämn ångfördelning.
+- **Arean** bestämmer antalet spår per minut — myonflödet är ~1/cm²/min vid
+  havsnivå, ~30 % högre vid 1 km. Se räkneexempel nedan.
+
+**Dokumenterade minimikammare:**
+
+| Exempel | Mått | Källa |
+|---|---|---|
+| Glaspetriskål (med α-källa) | Ø 100 mm × 10 mm hög (!) | [Zeze et al. 2012, arXiv:1202.2423](https://ar5iv.labs.arxiv.org/html/1202.2423) |
+| Petriskål-kammare med monazitkälla | Ø 90 mm × ~15 mm | [Hayakawa et al., RADIOISOTOPES 61, 297](https://doi.org/10.3769/radioisotopes.61.297) |
+| Luftkyld Peltier-kammare | 13×9×9 cm, kallyta 12×4 cm vid -30 °C | [Cloudylabs](http://www.cloudylabs.fr/wp/wp-content/uploads/2019/06/LittleAircooledCloudChamberv2.pdf) |
+| Kommersiell kompakt (TEL-Atomic DCC600) | Ø 13–15 cm kallyta | [TEL-Atomic](https://www.telatomic.com/all-produts/tel-dcc-600-diffusion-cloud-chamber) |
+| Känslig kammare utan källa (kyld kylfläns) | 134×134×20 mm botten | [Zeze et al. 2012](https://arxiv.org/pdf/1202.2423) |
+
+Viktigt: de allra minsta (petriskål, 10 mm höga) fungerar **bara med en
+radioaktiv källa inne i kammaren** — bakgrundsstrålningen ger bara "få spår per
+minut i mycket mörkt rum" (Zeze). Utan källa, på ren kosmisk bakgrund, behövs
+större yta och mörkare bakgrund.
+
+**Räkneexempel för vår burk (66 mm Ø):**
+
+- Kallyta Ø 50 mm → 20 cm². Myonflöde vid 1 km ≈ 1,3/cm²/min → ~25 myoner/min
+  korsar skiktet, varav en bråkdel ger *synliga* spår (erfarenheter: 0,15–0,7
+  synliga spår/cm²/min → **3–14 spår/min**).
+- Under 60–90 s nedfärd: i storleksordningen **enstaka till ~10 spår** — om
+  kammaren är stabil (se CADMUS-varningen §8).
+- Krymper man till Ø 35 mm (≈10 cm²) halveras sannolikheten → risk att få **noll
+  spår per flygning** ökar tydligt. Ø 45–50 mm är därför en bra kompromiss.
+
+**Praktiska minimimått för vår CanSat-kammare:**
+Ø 45–50 mm (kalla plattan), **höjd 40–50 mm totalt** (topp-alkoholfilt +
+känsligt skikt + marginal). Under ~35 mm Ø eller ~30 mm höjd blir det en
+"källkammare" — inte en kosmisk-strålningsdetektor. Två varningspunkter från
+litteraturen: (1) kalla plattan ska inte vara större än nödvändigt och inte
+sticka ut utanför kammaren — blottad yta = värmeläckage som förstör kylan
+([Cambridge HEP](https://www.hep.phy.cam.ac.uk/outreach/cloud), [Bevan 1954](http://hep.ucsb.edu/people/hnn/cloud/articles/ARBevanJSI31_45_1954.pdf));
+(2) nära väggarna finns en zon utan känslighet ([Lyapidevskii 1958](https://doi.org/10.3367/ufnr.0066.195809f.0111))
+→ isolera sidoväggarna och håll kammaren så bred som möjligt relativt höjden.
+
+**Kameravinkel:** vertikala myoner ger korta spår sett uppifrån (Wayne State:
+"most cosmic rays enter vertically and are too short to be seen" i ett 4 cm
+skikt) — sneda/långa spår syns bäst. I en 66 mm-burk är toppkamera + LED-ring
+(petriskål-metoden) det kompakta valet; sidkamera genom fönster ger längre spår
+men tar plats. Testa båda på markprototypen.
+
 ## 4. Kylkällan — alternativ och jämförelse
 
 ### 4.1 Torris (-78,5 °C) — troligen inte tillåtet, men fråga!
@@ -245,3 +300,13 @@ arrangören.
 - [Tukes – Kemikaalien vähittäismyynti (metyloitu sprit etc.)](https://tukes.fi/kemikaalit/kemikaalien-vahittaismyynti)
 - [RIGID 12V Mini Compressor (QX-serien)](https://www.rigidhvac.com/12v-mini-compressor)
 - [ESA Teach with space: Cloud chamber lesson](https://education.esa.int/cloud-chamber-radioactivity-in-a-cosmic-setting-teach-with-space-p03/)
+- [Zeze et al. 2012, "A sensitive cloud chamber without radioactive sources" (arXiv)](https://ar5iv.labs.arxiv.org/html/1202.2423)
+- [Hayakawa et al. 2012, "Petri dish-type cloud chamber" (RADIOISOTOPES)](https://doi.org/10.3769/radioisotopes.61.297)
+- [Cloudylabs, "Little Air Cooled Cloud Chamber" (Peltier)](http://www.cloudylabs.fr/wp/wp-content/uploads/2019/06/LittleAircooledCloudChamberv2.pdf)
+- [TEL-Atomic DCC600, kompakt diffusionskammare](https://www.telatomic.com/all-produts/tel-dcc-600-diffusion-cloud-chamber)
+- [Bevan 1954, "Optimum and limiting operating conditions for downward diffusion cloud chambers"](http://hep.ucsb.edu/people/hnn/cloud/articles/ARBevanJSI31_45_1954.pdf)
+- [Lyapidevskii 1958, "Diffusion cloud chambers" (Uspekhi)](https://doi.org/10.3367/ufnr.0066.195809f.0111)
+- [Wayne State REU 1998, "A Continuously Sensitive Cloud Chamber"](https://www.classe.cornell.edu/public/reu/1998reports/pruitt-simpson.pdf)
+- [Cambridge HEP outreach, "Cloud Chamber" (designtips)](https://www.hep.phy.cam.ac.uk/outreach/cloud)
+- [CERN S'Cool LAB, "Cloud Chamber DIY manual"](https://scoollab.web.cern.ch/sites/default/files/documents/20200521_JW_DIYManual_CloudChamber_v7.pdf)
+- [QuarkNet/Fermilab, "How to Build a Cosmic-Ray Cloud Chamber"](https://quarknet.fnal.gov/resources/QN_CloudChamberV1_4.pdf)
