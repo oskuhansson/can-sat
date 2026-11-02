@@ -109,6 +109,81 @@ skikt) — sneda/långa spår syns bäst. I en 66 mm-burk är toppkamera + LED-r
 (petriskål-metoden) det kompakta valet; sidkamera genom fönster ger längre spår
 men tar plats. Testa båda på markprototypen.
 
+## 3.2 Temperaturer — vilka behövs och vad vinner man på valet?
+
+Diffusionskammaren kräver **två temperaturer samtidigt**: en varm topp (avdunstning
+av alkohol) och en kall botten (övermättnad). Det är *gradienten* mellan dem som gör
+jobbet — inte absolutvärdet. Kyl botten kallt, håll toppen måttligt varm.
+
+### 3.2.1 De två målpunkterna
+
+**Varm topp: ~20–40 °C.**
+- Barretts fungerande Peltier-kammare använder 30–40 °C ([Barrett 2024](https://iopscience.iop.org/article/10.1088/1361-6552/ad506c));
+  Bellevue klarar sig med rumsvarm topp (händer/värmare) när botten är mycket kall
+  ([Bellevue](https://www.bellevuecollege.edu/physics/resources/cloudchmbr/)).
+- **Varning:** att värma toppen nära alkoholens kokpunkt (IPA ~82 °C, etanol ~78 °C)
+  är kontraproduktivt — ångan blir så tät att konvektion/mist förstör spåren. Analysen
+  i [UPV/EHU-avhandlingen](http://hdl.handle.net/10810/17990) visar att ~20 °C är
+  tillräckligt och att **att kyla botten är viktigare än att värma toppen**.
+- För oss: måttlig värmare (elektronikspillvärme räcker ofta, se §4.11.2d) → 20–40 °C.
+
+**Kall botten: -21…-40 °C — val av temperatur = val av alkohol och kylkälla.**
+
+| Plattans temperatur | Fungerande alkohol | Kylkälla | Nivå av enkelhet |
+|---|---|---|---|
+| ~-21 °C | **Etanol, metanol** | NaCl-PCM (hemfrys-laddad) | ⭐ Enklast |
+| -24…-30 °C | **Isopropanol** (och etanol med marginal) | SP-24/28/30-PCM, laddad med torris/LN₂ (§4.10) | 🧊 Mellan |
+| -35…-45 °C | Isopropanol, bäst kvalitet | Torris/Peltier | Under värdegräns, se nedan |
+
+- **Etanol fungerar redan vid ~-21 °C** ([UW-Madison](https://medphysics.wisc.edu/wp-content/uploads/2021/04/Cloud-Chamber-Lesson-Plan.pdf): -21 °C saltvatten;
+  [Bellevue](https://www.bellevuecollege.edu/physics/resources/cloudchmbr.): botten under -26 °C för deras kammare).
+- **Isopropanol behöver -25…-40 °C** ([Barrett](https://iopscience.iop.org/article/10.1088/1361-6552/ad506c): -25 °C fungerar;
+  [UPV/EHU](http://hdl.handle.net/10810/17990): teoretiskt optimum ned mot -40 °C för IPA).
+
+### 3.2.2 Vad man vinner på de olika temperaturerna
+
+1. **~-21 °C (etanol, NaCl-PCM):** enklaste möjliga passiva lösningen — hemfrys, billigt,
+   få saker att gå fel. Nackdel: etanol är mer flyktig (tar slut snabbare — men vår
+   flygning är bara ~2 min, så det kvittar) och du får mindre marginal innan plattan blir
+   för varm för känslighet.
+2. **-24…-30 °C (isopropanol, SP-24/28/30):** större termisk marginal, kan använda
+   **isopropanol** — enligt [UPV/EHU](http://hdl.handle.net/10810/17990) den alkohol som
+   ger bäst temperaturfördelning i kammaren (liten avdunstning, jämnare skikt). Detta ger
+   skarpare, längre spår och mer slagtålighet mot värmeläckage. Priset: måste laddas med
+   torris/LN₂/-30 °C-frys (§4.7, §4.10).
+3. **Kallare än ~-45 °C är INTE bättre.** [Zeze et al.](https://ar5iv.labs.arxiv.org/html/1202.2423)
+   visar att antalet synliga spår stabiliseras i mittenregionen och att **för kall platta
+   (extremt låg temp) ger mängder av bakgrundsdroppar som sänker kontrasten**, plus att
+   alfaspår blir tunnare. "Mitten" av deras goda intervall låg ungefär -30…-45 °C.
+   → Målet är ett **fönster**, inte en så låg temperatur som möjligt.
+
+### 3.2.3 Gradienten — den egentliga specifikationen
+
+Det som *definierar* en fungerande kammare är temperaturgradienten över det känsliga
+skiktet, inte plattans absoluttemperatur:
+- [Bevan 1954](http://hep.ucsb.edu/people/hnn/cloud/articles/ARBevanJSI31_45_1954.pdf)
+  gav en empirisk formel för minsta gradient (≈ **8–12 °C/cm** för metanol; ~10 °C/cm
+  bekräftades av [Cowan/Morrison-Plain](https://www.pp.rhul.ac.uk/~cowan/EWC/RevSciInstrum_20_492.pdf)).
+- Vår kammare (~40–50 mm hög) med topp +30 °C och botten -21 °C ger ΔT ≈ 50 °C över
+  ~4 cm ≈ **12–15 °C/cm** → klart över gränsen. Med -30 °C botten får man ~15–18 °C/cm.
+- Samma literatur (UPV/EHU): **kyl botten, värm inte toppen för mycket** — bottenstemperaturen
+  dominerar övermättnaden. Det är därför PCM-temperaturvalet är den viktigaste designnyckeln.
+
+### 3.2.4 Hur höjden hjälper — gratis fördel
+
+I mars i Vasa och vid 1 km är omgivningen kall (-5…-15 °C). Den kalla utsidan **kyler
+plattans undersida och sänker värmeläckaget in i den** (se §4.5) — dvs. gradienten förstärks
+och PCM:ns kylbudget varar längre än vid sommarlabb-temperaturer. Även om det inte räcker som
+kylkälla ensamt, så är det en hjälpande faktor.
+
+### 3.2.5 Rekommendation för CanSat
+
+**Baslinje: botten ~-21 °C + etanol** (fungerar, hemfrys-laddbar, enkelt). 
+**Uppgradering: botten -30 °C (SP-30) + isopropanol** om torris/CO₂/LN₂ finns tillgängligt
+på tävlingsorten (§4.7, §4.10) och tillstånd beviljas — det ger bättre spårkvalitet och
+större marginal, men kräver laddningslogistik. Gå inte kallare än -45 °C — det är
+kontraproduktivt. Toppen: 20–40 °C, gärna via elektronikspillvärme.
+
 ## 4. Kylkällan — alternativ och jämförelse
 
 ### 4.1 Torris (-78,5 °C) — troligen inte tillåtet, men fråga!
