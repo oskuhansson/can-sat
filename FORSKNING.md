@@ -533,6 +533,91 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
   höjdberoendet) — robust och billigt, men inte en cloud chamber. Kan kombineras:
   cloud chamber på marken som demonstration, Geiger i luften som data.
 
+### 8.1 Hur resilient är en cloud chamber mot vibrationer? — den tuffaste frågan i projektet
+
+**Kort svar: en diffusionskammare är en *stillastående-gasmätare*. Vibrationer och
+accelerationer blandar gasen och förstör övermättnadsskiktet — resiliensen är LÅG
+mot kontinuerlig vibration, men tolerabel mot korta transienter, *om* kammaren byggs
+införstått.**
+
+#### Fysiken: varför vibrationer är dödliga för diffusion
+
+- Diffusionskammarens hela funktion bygger på **stillastående gas** med en stabil
+  temperaturgradient; övermättnadsskiktet (2–5 cm högt) finns bara där ångan
+  diffunderar lugnt nedåt. Allt som rör om gasen — vibration, gungning, rotation,
+  accelerationsändringar — blandar varm/kall gas och skiktet kollapsar
+  ([U. Mons](https://orbi.umons.ac.be/bitstream/20.500.12907/22502/1/Wilson_v1_red.pdf)).
+- Skillnad mot expansionstypen: en **expansionskammare**, som Wilson/Anderson använde,
+  är bara känslig i ett ögonblick efter en snabb expansion och tål rörelse mycket
+  bättre — Anderson & Neddermeyer flög faktiskt en expansionkammare i en **B-29 bombplan**
+  på 13 500 m höjd och tog 3 500 bilder (i ett tryckkabin, med konstant temperatur och
+  snabb 4 ms-expansion). Vår **diffusionskammare** har ingen sådan "frys-ögonblick" -
+  det är just detta som är den stora utmaningen ([Cowan 1949 RSIm str.](https://www.pp.rhul.ac.uk/~cowan/EWC/RevSciInstrum_20_492.pdf),
+  [Adams, Caltech-thesis](https://doi.org/10.7907/dvvv-ts23)).
+- De viktigaste skadenivåerna, uppifrån och ned:
+  1. **Mekanisk sammanblandning av gasen** (> ~0,1 g, kontinuerlig): övermättnadsskiktet
+     förstörs. Det är känsligare än man tror — även konvektionsströmmar av ren termisk
+     natur stör kammaren; forskare har ägnat hela artiklar åt att eliminera "subtle
+     convective flows" som stör nucleation ([Bertelsmann & Heist 1997](https://pubs.aip.org/aip/jcp/article/106/2/624/479112/Two-dimensional-transport-and-wall-effects-in-the),
+     [Ferguson & Nuth 1999](https://pubs.aip.org/aip/jcp/article/111/17/8013/184268/The-influence-of-buoyant-convection-on-the)).
+  2. **Accelerationsändringar mellan 0 och ~20 g** (raketstart → fritt fall): ändrad
+     tyngdkraft gör att densitetsgränser i kammaren omfördelas, skiktet flyttar sig eller
+     välter.
+  3. **Vätskerörelse**: om flytande alkohol samlas på plattan slår den omkull vid 20 g
+     och vid fallskärmsgungning.
+  4. **Mekaniska trasor**: ram, fokus, kablar, filt som lossnar under vibration.
+- Återhämtningstid: efter en störning återbildas övermättnadsskiktet först efter att
+  gasen lugnat sig — i praktiken **sekunder till ~1 min** innan spår blir tydliga igen
+  ([U. Mons](https://orbi.umons.ac.be/bitstream/20.500.12907/22502/1/Wilson_v1_red.pdf):
+  återvinning ~min; droppar → synliga på ~100 ms, återcirkulering minuter).
+  Det betyder att en kammare hinner bli användbar **mellan** stötar, inte **under** dem.
+
+#### Vad CanSaten faktiskt utsätts för (mätbara siffror)
+
+| Fas | Acceleration / vibration | Påverkan |
+|---|---|---|
+| Raketmotorn, ~2–4 s | upp till **20 G** axialt + bredbandsvibration | Skiktet förstörs omedelbart |
+| Fyrsteg (coast) efter motorstopp | ~0 g (tyngdlöshet) | Skikt KAN återbildas i mikrograv, men droppar faller inte |
+| Utkast/kapsel, apogeum | stötar vid utstötning | Kort störning |
+| Fallskärmsöppning | kraftig ryck (~2× terminalkraft; kort stöt) | Störning |
+| **Nedfärd, 90–125 s** | **8–11 m/s**, gungning/spinn i fallskärm, vind | **Kontinuerlig störare** — största hotet |
+| Landning | hård stöt | efter avslutad mätning |
+
+Källa för acceleration/vibration: CanSat-krav 20 G + vibrationsprov 0–233 Hz,
+~20–29 G ([CanSat-guide §3.3](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf),
+[kanadensiska kraven](http://csdcms.ca/Docs/CSDC_CanSat_Requirements_2024-25.pdf)),
+nedfärdsprofilen 8–11 m/s i [ESA parachute-guide](https://cansat.esa.int/wp-content/uploads/2023/09/T10_Parachute_Design_EN.pdf).
+
+### 8.1.1 Vad det betyder i praktiken — och hur man maximerar chansen
+
+**Realistisk slutsats:** i en skakande, gungande burk blir kammaren med stor
+sannolikhet *inte* kontinuerligt känslig under nedfärden. Men det finns fyra konkreta
+motåtgärder som kan rädda några spår:
+
+1. **Vibrationsisolera kammaren från burken.** Häng kammarmodulen i flexibla
+   montage/stötdämpare (silikon-/kork-/gummistudsar, eller en enkel "fjädrad plattform")
+   så att hög vibration dämpas. I en liten burk är detta lätta montage kraftfulla: de
+   låter kammaren "glida" relativt burken. *Viktigt:* isolera också från akustisk kanal
+   — luftljud kan agera direkt på droppbildningen.
+2. **Prova expansions-liknande fångstmoment i stället för kontinuerlig drift.**
+   Inspireras av B-29-modellen: var bara känslig i korta fönster. T.ex. slå på
+   trigger+strobe och ta bilder i 100–300 ms längre "lugna" luckor som detekteras med
+   accelerometern (varje gång vibrationen < tröskel). RGB-strobe-idén (§6.4) kan fånga
+   spår som *passerar* i en lugn lucka — kammarens "känsliga tid" kan vara kort men
+   ändå räcka för ett enstaka linjeformat spår.
+3. **Gör kammaren grund och bred** (lägre profil) → kortare diffusionsväg → skiktet
+   återbildas snabbare och är mindre känsligt för vertikala blandningar.
+4. **Registrera vibration/accelerometer parallellt** så att data kan
+   korreleras/tidstämplas: om ett spår bildas i en lugn lucka ska man *veta* att det
+   var lugnt då. Det förvandlar "inga spår" från opublicerbar till *mätbar*: man kan
+   visa korrelationen (spår ↔ <låg acceleration).
+
+**Ändå: bash-högra sanningen kvarstår.** CADMUS i ett lugnt ballongfäste lyckades
+inte med bilder; en gungande fallskärm i 8–11 m/s är väsentligt tuffare. Därför är
+**målbilden fortfarande teknikdemonstration + temperatur/vibrations-loggnings + video**,
+med spår som bonus — vilket redan är en världspremiär för CanSat. Alla åtgärder i
+§6.4 och här ökar bara sannolikheten för bonusen, de garanterar den inte.
+
 ## 9. Sammanfattning / beslutspunkter
 
 1. **Kylkälla: passiv förfryst PCM-platta (frys-metoden)** — enda realistiska
@@ -602,3 +687,9 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
 - [Vanderbilt, "Demonstration Cloud Chamber" (LN₂ + etanol)](https://www.vanderbilt.edu/physicsdemonstration/davesdemos/demonstrations/demo106.htm)
 - [PCM Products, "PlusICE Eutectic Catalogue" (PCM:er -100…+89 °C)](https://www.pcmproducts.net/files/eutectic_catalogue-2011-1.pdf)
 - [Mousazade & Rafee 2020, "Cold panels with PCM in a refrigerated truck" (E-26/E-29/E-32)](https://www.sciencedirect.com/science/article/abs/pii/S0140700720303753)
+- [Cowan 1949, "A Large Cloud Chamber Using Rear Illumination" (flugit i B-29 på 13,5 km)](https://www.pp.rhul.ac.uk/~cowan/EWC/RevSciInstrum_20_492.pdf)
+- [Adams (Caltech), "Cloud Chamber Studies in Cosmic Rays at an Altitude of 30,000 Feet"](https://doi.org/10.7907/dvvv-ts23)
+- [Bertelsmann & Heist 1997, "Thermal diffusion cloud chamber. II. Stability of operation"](https://pubs.aip.org/aip/jcp/article/106/2/624/479112/Two-dimensional-transport-and-wall-effects-in-the)
+- [Ferguson & Nuth 1999, "The influence of buoyant convection on the upward thermal diffusion cloud nucleation chamber"](https://pubs.aip.org/aip/jcp/article/111/17/8013/184268/The-influence-of-buoyant-convection-on-the)
+- [ESA teach with space, "Parachute design for CanSat" (nedfärdsprofil 8–11 m/s)](https://cansat.esa.int/wp-content/uploads/2023/09/T10_Parachute_Design_EN.pdf)
+- [Canadian CanSat Design Challenge 2024-25 Requirements (20 G, launch profile)](http://csdcms.ca/Docs/CSDC_CanSat_Requirements_2024-25.pdf)
