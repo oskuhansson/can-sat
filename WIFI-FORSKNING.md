@@ -241,3 +241,130 @@ attityd — det blir en riktigt bra "vetenskaplig" del av missionen.
 - [TP-Link Beam Bridge 5 UR (15 km @ 23 dBi — vad WiFi kan med plats)](https://www.omadanetworks.com/us/business-networking/omada-wifi-wireless-bridge/beam-bridge-5-ur-kit/)
 - [Finska CanSat-guiden (4,5 cm-utrymme, regler, PLR)](https://www.esero.fi/finnish-cansat-competition-guidelines)
 - [Luxemburg CanSat Teams Manual (4 h-batteri-regel)](https://www.esero.lu/wp-content/uploads/2026/02/Teams-Manual-2025-2026-Luxembourg-CanSat-Competition-v3.pdf)
+
+---
+
+## 12. Ny idé: satelliten som relä (bent-pipe) mellan två markstationer 📡
+
+*Utvecklad 2026-11-02. Eftersom en live-demo för telefoner komprimeras för mycket av
+~2 minuters flygtid, flyttas fokus till den klassiska "satellittelefonin": **två
+högförstärkta markantenner på marken, och CanSaten vidarebefordrar signaler mellan
+dem** — precis som en verklig transponder-satellit.*
+
+### 12.1 Konceptet — och att det redan är beprövat
+
+Det här är **exakt** vad amatörradiosatelliter gör: [AO-91 (Fox-1B)](https://www.amsat.org/two-way-satellites/ao-91/)
+och [ISS FM-repeatern](https://www.amsat.org/live-fm-satellites/) tar emot på en
+frekvens (upplänk) och återsänder på en annan (nedlänk) — en **cross-band/bent-pipe
+repeater**. Två radiostationer som inte hör varandra direkt kan prata *genom* satelliten.
+Tekniken är väletablerad och pedagogiskt tydlig ("satelliten reläerar min signal!").
+
+Inom CanSat-världen finns redan ett konkret bevis: [CanSat 2003 (Stanford/Morehead)](https://scholarworks.moreheadstate.edu/cgi/viewcontent.cgi?article=1289&context=twiggs_education_collection)
+demonstrerade en **ProbeSat → RelaySat → Ground Station-kedja** (fjärrkänslans
+temperature levererades till basstationen via en relä-Cansat). Detta är alltså inte
+teori — det har gjorts i en CanSat förr.
+
+**Nyckel: high-gain-antennerna sitter PÅ MARKEN, inte i burken.** Den tidigare
+lättaste antennbegränsningen i §4 (66 mm-burken) försvinner: markstationerna "äger"
+21–33 dBi-diskar/yagis av godtycklig storlek ([TP-Link Beam Bridge 23 dBi](https://www.omadanetworks.com/us/business-networking/omada-wifi-wireless-bridge/beam-bridge-5-ur-kit/),
+[LevelOne 12 dBi](https://www.level1.com/level1_en/wan-2121-12dbi-2-4ghz-directional-panel-antenna-54046107)).
+CanSaten behöver bara en liten omni/patch som ryms i burken. Det lämnar gott om plats
+för annan elektronik/sensorer.
+
+### 12.2 Två-hopp-länkbudget (upplänk + nedlänk)
+
+En relä-länk är **två separata enkelhopp** (mark A → satellite, satellite → mark B).
+Vid 750–1100 m-missionsprofilen:
+
+| Enkelhopp (2,4 GHz) | Antagande | Resultat |
+|---|---|---|
+| FSPL vid ~1,5 km slantavstånd | ~103 dB (rftools) | — |
+| Upplänk: mark A (TX 20 dBm + 12 dBi) → burken (0–5 dBi) | ~35 dBm EIRP − 103 dB + 5 dBi | **~−63 dBm vid burken** — god marginal |
+| Nedlänk: burken (TX 20 dBm EIRP) → mark B (12–23 dBi) | 20 dBm EIRP − 103 dB + 12…23 dBi | **~−71…−60 dBm vid mark B** — mycket god |
+| Slutsats | — | ✔ **Länken sluter med 20–30 dB marginal** |
+
+Viktigt: SFDR-tak skiljer sig mellan upp-/nedlänk — även här är burkens 20 dBm EIRP
+begränsningen på **nedlänken**, men höga markantenner kompenserar (>12 dBi). Resultatet:
+med två markantenner på >10 dBi blir **bent-pipe-reläet robust över hela nedfärden** —
+och det är just den high-gain-idé som *i marken* är praktisk, inte i burken.
+
+**Lägre frekvens = ännu enklare:** på **868 MHz LoRa** (som flesta CanSat-länkar redan
+använder) är FSPL ~20 dB lägre (~85 dB vid 1,5 km) och mottagarkänsligheten mycket
+bättre (−137 dBm jämfört med WiFi ~−85). Med 868 MHz + 12 dBi-markantenn når man även
+nedlänken med enorm marginal, och man kan använda **kryssband** (868 upp, 2,4 GHz ner)
+som amatörsatelliterna gör.
+
+### 12.3 När ger reläet faktiskt ett mervärde? (ärlig fråga) 🤔
+
+En två-hopp-länk är **sämre än en direktlänk** om markstationerna hör varandra direkt.
+Reläet "lönar sig" när:
+
+1. **Markstationerna inte har fri sikt till varandra** — ett terräng-/byggnadshinder,
+   eller avstånd där jordkrökningen/Fresnelzonen bryter direktlänken. CanSaten på ~1 km
+   gör att en högpunkt *ovanför* hindret kopplar ihop sidorna — samma princip som
+   bergstopp-reläer/eldar.
+2. **Missionen är en teknisk demonstration** av "satellitkommunikation i mini": även om
+   direktkommunikation vore möjlig är *utmaningen* att visa att signalen gick via
+   satelliten (telemetri-verifiering: RSSI-tider + GPS-spår i bägge ändarna).
+3. **Store-and-forward (halvrelä):** burken tar emot data under hela flygningen (inte
+   bara i realtid), sparar och skickar vidare när den andra marken har kontakt — så att
+   tidsfönstret inte är 2 minuter utan nästan hela nedfärden. (Jämför CubeSat
+   [store-and-forward/data-mule-studier](http://users.csc.calpoly.edu/~bellardo/pubs/wc10.pdf).)
+
+### 12.4 Regler (868 MHz + 2,4 GHz, licensfritt)
+
+- **868 MHz (CETP/EU SRD, [EFIS-annex 1](https://efis.cept.org/adhoc_grabber.jsp?annex=4)):**
+  klubbarna räknas på *e.r.p. (dBd)* — inte e.i.r.p. — och e.r.p. = dBi − 2,15.
+  Vanligaste lägen: **h1.5/h1.4 25 mW e.r.p., ≤1 % driftcykel** eller **h1.7
+  (869,4–869,65 MHz) 500 mW e.r.p., ≤10 % driftcykel** ([Domca-regelbukett](https://docs.domca.nl/en/usage/regulations/)).
+  För en reläe-demo räcker 25 mW gott; mem 500 mW-läget ger längre räckvidd men kräver
+  ≤10 % sändtid (enkelt: korta paket + väntan).
+- **2,4 GHz:** 20 dBm EIRP (§4) — fritt utomhus, 13/14 kanaler.
+- **Kryssband (868 upp / 2,4 ner) är både praktiskt och juridiskt rent** (olika band,
+  ingen självblockering). Att *återsända* (relä) är tillåtet för utrustning som uppfyller
+  EN 300 328/EN 300 220 — använd CE-märkta moduler, inga förstärkare.
+- Självblockering/återkoppling ("feedback") är det klassiska repeterproblemet: på
+  samma frekvens kan nedlänken träffa upplänksmottagaren. → Använd **kryssband** eller
+  **tid-delning (TDD)** med CE-moduler som gör det internt.
+
+### 12.5 Föreslagen arkitektur (markantennerna bär vinsten)
+
+```
+ Mark A (TX/RX)  ──►  CanSat-relä (cross-band, ev. store-forward)  ──►  Mark B (RX/TX)
+  868/2,4 GHz           liten omni/patch i burken                          höga antenner
+  höga antenner         ~1,7 W effektbudget                               (>12 dBi)
+```
+
+- **Markstationer:** två höga 868 MHz-yagis (≥12 dBi, ~30–40 €/st) eller 2,4 GHz-paneler
+  (≥12 dBi), vardera kopplade till en SDR/RF-modul + enkel PC. Billigt, och allt ligger
+  kvar på marken (ingen mass- eller volymeffekt i burken).
+- **CanSat:** bara en befintlig LoRa/WiFi-modul + liten antenn; relä/forward-släms funktion
+  i firmware; ~+5–15 g extra. Ingen phased array, inga motorer, inga stora antenner.
+- **Datavy: "kanal mellan stationerna" via RSSI/GPS-loggar i båda ändar + en bevis-ton**
+  (t.ex. ett testmeddelande "HELLO via CanSat <id>") som bägge sidor loggar. Detta blir
+  missionens vetenskapliga/tekniska del — väldokumenterad och verifierbar.
+
+### 12.6 Bedömning och rekommendation
+
+- **Starkt uppdrag:** robust (markantenner kompenserar burkens begränsningar), beprövat
+  (CanSat 2003, AO-91/ISS), regelmässigt enkelt (licensfritt, cross-band), pedagogiskt
+  med det klassiska "satelliten reläerar mellan två stationer", och det kräver nästan
+  ingen volym/massa i burken → gott om plats för sensorer.
+- **Rekommenderad bärlinje:** **868 MHz LoRa till modul + 12 dBi yagi på vardera
+  markstation, cross-band (868 upp / 2,4 ner) eller store-and-forward**, betyg-målet
+  "teknisk demonstration av satellitkommunikation" — med ett explicit verifierat bevis
+  (meddelande + RSSI + GPS) snarare än "live bredband".
+- **Förbättringar jämfört med hotspot-versionen:** ingen live-timing-stress
+  (store-forward + alla nedfärdsminuter), inga telefoner att jaga, markantenner = godtycklig
+  förstärkning, och den adresserar exakt målgruppens kärnfråga ("varför behövs en satellit?").
+
+## 13. Källförteckning (tillägg för relä-versionen)
+
+- [AMSAT, "Two-way satellites: AO-91 Fox-1B" (cross-band FM-repeater)](https://www.amsat.org/two-way-satellites/ao-91/)
+- [AMSAT, "Live FM Satellites" (AO-91, ISS, SO-50 m.fl.)](https://www.amsat.org/live-fm-satellites/)
+- [CanSat 2003 (Stanford/Morehead), ProbeSat→RelaySat→Ground demonstration](https://scholarworks.moreheadstate.edu/cgi/viewcontent.cgi?article=1289&context=twiggs_education_collection)
+- [S. Hum (Univ. Toronto), "Satellite Links" — transponder, upp-/nedlänk, link budget](https://www.waves.utoronto.ca/prof/svhum/ece422/notes/23-satellite.pdf)
+- [CEPT EFIS, "Annex 1: Non-specific Short Range Devices" (868 MHz h1.x, e.r.p.-nivåer)](https://efis.cept.org/adhoc_grabber.jsp?annex=4)
+- [DOMCA, "Regulations & Duty Cycle" (868 MHz e.r.p., duty cycle, dBd vs dBi)](https://docs.domca.nl/en/usage/regulations/)
+- [CalPoly, "Store-and-forward routing and data mules for CubeSats"](http://users.csc.calpoly.edu/~bellardo/pubs/wc10.pdf)
+- [MathWorks, "DVB-S2 bent pipe simulation" (relä-länk, koncept)](https://www.mathworks.com/help/satcom/ug/dvbs2-bent-pipe-simulation-with-rf-impairments-and-corrections.html)
