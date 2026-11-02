@@ -27,15 +27,33 @@ Källa: [esero.fi – Kilpailun vaatimukset](https://www.esero.fi/cansat-kilpail
 |---|---|---|
 | Volym | Europeisk läskburk: **115 mm hög, 66 mm Ø** | Kammarens synfält blir ~45–50 mm Ø |
 | Massa | **300–350 g** (totalt, inkl. batteri) | Mycket snäv budget; kylplatta + PCM måste vägas |
-| Budget | **≤ 500 €** | Helt OK med passiv kylning (Arbor-metoden ~60 €) |
+| Budget | **≤ 500 €** | Helt OK: egenbyggd passiv frysplatta ~60 €; färdigt [Arbor-kit](https://www.arborsci.com/products/cloud-chamber) ~150 €+ |
 | Förbjudna ämnen | **"Räjähteet, sytyttimet, pyroteknik, *palonarat materiaalit*, farliga ämnen och biologiska nyttolaster är absolut förbjudna"** | ALLA alkoholer (isopropanol, etanol, metanol) är brandfarliga → kräver **skriftligt specialtillstånd** från arrangören. Vid misstanke begärs säkerhetsdatablad (SDS). |
 | Ström | Batteri/solceller; systemen ska kunna vara på **2 h i sträck** | Peltier-kylning på 50–200 W går inte i 2 h; passiv förfryst kylplatta drar 0 W under flygning |
 | Acceleration | Klarar **20 G** | Kammaren måste hållas ihop mekaniskt; vätska i filt fungerar |
 | Flygtid | Rek. **≤ 120 s**, utfördesfart 8–11 m/s | Mättid ~60–90 s — mycket kort! |
 | Övrigt | Lättåtkomlig batteri- och huvudströmbrytare, återfinnbarhet (GPS/blipp) | Kräver genomtänkt mekanik |
 
+**Regelkompletteringar verifierade 2026-11-02** (från [finska guiden](https://www.esero.fi/finnish-cansat-competition-guidelines) och [esero.fi krav](https://www.esero.fi/cansat-kilpailun-vaatimukset)):
+
+- **4,5 cm axialt utrymme i raketen** ovanför burken för fallskärm + fäste + antenner
+  ("raketin hyötykuorma-alueella … 4,5 cm tilaa CanSatia kohden tölkin pitkittäissuunnassa").
+- **Nedfarten MÅSTE ligga i 5–12 m/s** (obligatoriskt säkerhetsintervall), rekommenderat 8–11 m/s.
+- **Fallskärmsfästet ska tåla ≥50 N** (testkrav; ESA internationellt rekommenderar 200 N).
+- **Faktisk flygprofil (Vasa 2024–2026):** apogeum 750 m (2026, H219-motor) till 900–1100 m
+  (2024–25), uppmätt **~30 G** med snabbbrinnande motorer trots 20 G-kravet; mättid
+  ~70–120 s (med 8–11 m/s blir 750–1100 m → 68–137 s) — inte fasta 60–90 s.
+- **Poängviktning:** teknik 35 %, vetenskapligt värde 30 %, "professionella kompetenser" 25 %,
+  outreach 10 % — sekundärmissionens utförande räknas in under teknikposten.
+
 Tävlingen 2027: [Suomen CanSat -kilpailu i Vasa 11–14.3.2027](https://www.esero.fi/cansat-kilpailu),
-anmälan 10.9–30.10.2026, lag om 3–5 elever 14+ år.
+**förregistrering 10.9–30.10.2026, projektrepresentation + videopitch 11.12.2026,
+urval meddelat 21.12.2026**, lag om 3–5 elever 14+ år. **Obligatorisk Pre-Launch Report
+(max 15 sidor, engelska) senast 20.2.2027** till esero.finland@heureka.fi
+([finska guiden](https://www.esero.fi/finnish-cansat-competition-guidelines)).
+⚠️ Dokumentet sammanställdes 2026-11-02 — **verifiera omedelbart med ESERO Finland att
+laget hunnit med förregistreringen (deadline var 30.10.2026)**; sista möjliga anmälan är
+projektpresentationen 11.12.2026.
 
 ## 3. Hur en diffusionskammare fungerar (kraven)
 
@@ -50,7 +68,8 @@ Fysiken: [Thesis, Detection of particles with a cloud chamber (UPV/EHU)](http://
     fungerande Peltier-byggen når -25…-33 °C).
   - **Etanol/metanol: fungerar med varmare botten** (Bellevue: -26 °C; UW-Madison:
     -21 °C förfryst saltvatten fungerar).
-- Känsligt skikt är bara ~1 cm högt ovanför den kalla plattan → kammaren behöver vara
+- Känsligt skikt är bara ~2–4 cm högt ovanför den kalla plattan (i små kammare ~1 cm;
+  exakta värdet beror på geometri, se §3.1) → kammaren behöver vara
   **låg och bred** (petriskål-geometri), inte hög.
 - Mörk botten, sidobelysning (LED) med snett infall, kamera ovanför/sidan.
 
@@ -218,7 +237,8 @@ Precis som [Arbor Scientific Cloud Chamber](https://www.arborsci.com/products/cl
   bara **~16 g** mot kopparns **~53 g** (densitet 2,70 vs 8,96 g/cm³). Besparing ~37 g
   = över 10 % av CanSats massbudget. Kopparns bara ~2× bättre värmeledning (385–400
   mot ~170–230 W/m·K) spelar ingen praktisk roll vid den lilla värmelasten (1,5–3 W):
-  temperaturfallet genom plattan blir <0,02 K för båda. Aluminium har dessutom ~2,3×
+  temperaturfallet genom plattan blir <0,03 K (Al: 3 W·0,003 m/(170·1,96·10⁻³ m²)≈0,03 K).
+   Aluminium har dessutom ~2,3×
   högre specifik värmekapacitet per kg (900 mot 385 J/kg·K). Svart eloxering ger
   samtidigt den mörka bakgrund som behövs för spårkontrast (samma platta som
   [CERN](https://scoollab.web.cern.ch/sites/default/files/documents/20200521_JW_DIYManual_CloudChamber_v7.pdf)
@@ -313,7 +333,8 @@ ned till långt under noll:
   fungerar** (som kräver -25…-40 °C), och marginalen mot etanolens -21 °C blir stor.
 - **Laddningskravet är den enda haken:** PCM:en måste frysas *under* sin smälttemperatur,
   dvs. SP-30 kräver ≤-30 °C (industrifrys, LN₂ eller torris — den senare skapas gratis
-  med CO₂-patron-metoden i §4.7). Vanlig hemfrys (-18 °C) laddar bara NaCl-brinen (-21 °C).
+  med CO₂-patron-metoden i §4.7). **Vanlig hemfrys (-18 °C) klarar INTE ens det
+  eutektiska NaCl (-21,2 °C)** — den ger bara ~20 %-lösning (-16,5 °C), se §4.10.2/M1.
 - Slutsats: **passiv metod + lägre-tempererad eutektik (SP-24/28/30) laddad med torris/LN₂
   = bästa vägen till IPA**, om laddningslogistiken ordnas (§7, fråga 8).
 
@@ -424,7 +445,8 @@ bekräftar §6.2:s massbudget (60–100 g PCM räcker för 2–4 h-vilan + 2 min
   håll undan från värmekammaren-testet i §7-fråga 9 (60 °C i 2 h kan vara nära gränsen).
 
 **Praktisk puck-dimension (från §6.5):** 60 g NaCl-brin eller ~50 ml SP-21/E-22 i en
-Ø 58-påse (fylld till 90 %) blir ~15–18 mm tjock — dimensioneringen i §6.5 står sig.
+Ø 58-påse (fylld till 90 %) blir ~**21 mm** tjock (50 / (π·2,9²·0,9) ≈ 21 mm) — stämmer
+med §6.5:s 18–20 mm.
 
 ## 4.11 Energi och värme — hur mycket drar burken, och blir värmen ett problem?
 
@@ -474,10 +496,13 @@ NaCl-eutektikum 23,3 % smälter vid **-21,2 °C** med latent värme **228–257 
 | 100 g | ~25 kJ | ~3,5 h | ~2,3 h |
 
 **Detta är dimensionerande:** check-in → start kan vara 1–4 h (officiellt ska CanSaten
-vara inlämnad kl 12, lansering 13 → i värsta fall timmar i vila) + 2 min flygning.
+vara inlämnad kl 12, lansering 13; erfararna från Vasa 2024–26 visar 20 min–4 h väntan,
+med risk för uppskov till lördag, se §2) + 2 min flygning.
 Med 80–100 g PCM och ~2 W läckage klarar man 2–3 h — men marginalen är tunn. Tre
-motåtgärder: (1) minimera läckaget (isolering, låg emissivitet på plattans ovansida,
-hindra konvektion med tunn folie/lager), (2) håll kammaren **avstängd** (ingen
+motåtgärder: (1) minimera läckaget (isolering; observera att plattans **svarta ovansida**
+krävs för spårkontrast och därför inte ska få låg emissivitet — sänk i stället strålningen
+med en tunn låg-ε-reflektor/folie **ovanför det känsliga skiktet** eller acceptera ~0,5 W
+strålning, [M3]; hindra konvektion med tunn folie/lager), (2) håll kammaren **avstängd** (ingen
 toppvärmare) tills strax före start så att gradienten bara byggs upp när det behövs,
 (3) förvara den frysta enheten i en **isolerad transportlåda/kylbox ända fram till
 integreringen**. Lägg till fråga till arrangören: när exakt integreras/startas burken?
@@ -563,8 +588,10 @@ E_kyl [kJ] = värmeläckage [W] × tid [s] / 1000
 | ~43 kJ | ~160 g | 4 h vid 3 W (extremfall) |
 
 **Dimensionerande rekommendation:**
-- **Sikta på 20–30 kJ användbar kyla → ~80–115 g E-26/HS26N.** Det täcker den
-  sannolika verkligheten (2–3 h vila vid ≤2 W läckage + 2 min flygning) med marginal.
+- **Sikta på 20–30 kJ *användbar* kyla → ~100–150 g E-26/HS26N** (nominellt latent
+  265 kJ/kg × 70–80 % nyttjande = ~200 kJ/kg verkligt; 20/0,2=100 g och 30/0,2=150 g
+  — tabellen ovan anger *nominella* kJ utan faktorn och underskattar därmed massan).
+  Det täcker den sannolika verkligheten (2–3 h vila vid ≤2 W läckage + 2 min flygning).
 - **Viktigt:** räkna med en säkerhetsfaktor — PCM:ns *latenta* värme (265 kJ/kg) är den
   teoretiska siffran; i praktiken läcker kyla i frånkopplingstätningar, genom
   påsens väggar och vid ojämn kontakt. Anta ~**70–80 % av det nominella värdet** som
@@ -638,7 +665,7 @@ frysplatta); IPA om ni ändå får lov och kör Peltier på marken.
 | Batteri ~10 Wh (2× 18650 eller LiPo) | ~60–80 g |
 | Struktur + isolering (styrox + burk) | ~50–70 g |
 | Fallskärm + fästanordning | ~20 g |
-| **Summa** | **~310–380 g** → trimma med tunnare platta/PCM |
+| **Summa** | **~280–350 g** ✅ (inom 300–350 g med små marginaler; tyngsta posterna PCM + batteri) |
 
 ### 6.3 Hybrid (om tillstånd + logistik tillåter)
 Peltier på marken för att förkyla plattan till -30…-40 °C strax före start, sedan
@@ -660,7 +687,7 @@ korrigering av tidskalan: millisekunder, inte mikrosekunder.**
 
 | Tid efter passage | Vad händer | Rörelse |
 |---|---|---|
-| 0 (ns-skala) | Myonen passerar, ~230 joner/cm längs banan | ~c → ingen bildbar rörelse |
+| 0 (ns-skala) | Myonen passerar, ~60–100 joner/cm längs banan (MIP i luft) | ~c → ingen bildbar rörelse |
 | ~10–200 ms | Droppar växer till synlig storlek (r²∝t, [Barrett & Germain 1947](https://pubs.aip.org/aip/rsi/article/18/2/84/296528/Growth-of-Drops-Formed-in-a-Wilson-Cloud-Chamber)) | ~stillastående |
 | ~50–500 ms | Spåret är synligt; droppar faller med Stokes sluthastighet | **~1 cm/s vid r=10 µm**, r²∝v → ~9 cm/s vid r=30 µm ([Blackett 1934](https://royalsocietypublishing.org/rspa/article-pdf/146/857/281/28637/rspa.1934.0154.pdf), [UVic-ekvationer](https://particle.phys.uvic.ca/~jalbert/chamber.pdf)) |
 | ~0,5–1 s | Droppar sjunkit ur det känsliga skiktet; skiktet återhämtar sig på några sekunder | — |
@@ -699,7 +726,8 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
   pulsströmmar på 10–200 A i µs–ms utan skada ([Wilson et al. 2014](https://doi.org/10.1007/s12650-014-0220-7),
   [frozentime.se-blixtbygget](http://frozentime.se/ljus/high_speed_leds.html) — 5 µs
   blixtar, RGB-filtrerade, med exakt den här metoden för att filma 10 µm-droppar!).
-  Energi per händelse: ~0,1 J/färg → **~0,1 W i snitt** vid 10 spår/min. Försumbar.
+  Energi per händelse: ~0,1 J/färg → **~0,05 W i snitt** vid 10 spår/min
+  (3 × 0,1 J × 10/60 = 0,05 W). Försumbar.
   Kondensatorbank + MOSFET-drivare; skärma/EAV-skydda radion.
 - **Sekvens:** R@t=0, G@t+20–50 ms, B@t+40–100 ms, pulsbredd 0,1–1 ms (fryser
   rörelsen: 1 cm/s × 1 ms = 10 µm oskärpa ≈ pixel). Tillväxt + fall ger tydliga
@@ -710,6 +738,16 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
   radfart eller (enklast) ta **3 korta exponeringar, en per färg**, och
   sammanfoga i programvara efteråt. Kameran behöver bara ~20 fps; spåret lever kvar
   över flera bildrutor.
+- **Kameraspec (verifierat mot [OV5640-databladet](https://s1-dl.theimagingsource.com/api/2.5/packages/publication/sensor-omnivision/ov5640/98284436-e865-5de5-a517-7a514df571b6/ov5640_1.0.en_US.pdf)):**
+  OV5640 (QSXGA 2592×1944, 1,4 µm pixlar, 600 mV/lux·s, 68 dB, rolling shutter,
+  15 fps i full upplösning, -30…+70 °C, 140 mA) ger **19 µm/pixel** över Ø50 mm —
+  spåren (0,2–1 mm breda kedjor) blir **10–50 px**; enskilda droppar (10–50 µm) är
+  sub-pixel och syns bara som Mie-spridningshalos. OV2640 (1600 px) ger 31 µm/px;
+  **≥1 MP räcker, VGA är i underkant för analys.** Skärpedjup: vid ~50 mm arbetsavstånd
+  och f/2,8 är fokuszonen bara ±2 mm medan det känsliga skiktet är ~20 mm → **blända
+  ner till f/4–f/8** (med starkare LED) eller fokusera på plattan. Använd fast fokus
+  (manuell M12-objektiv), aldrig autofokus. Global-slutarkamera (t.ex. OV9281, 1 MP
+  monokrom) behövs bara om alla tre färgerna ska rymmas i **en** exponering.
 - **Fallback (ännu enklare):** ingen trigger alls — cykla RGB kontinuerligt synkat
   med kamerans bildrutor och välj spårbilder i efterhand. Fungerar alltid, men ger
   mer data att sortera.
@@ -745,17 +783,33 @@ hur tjock den behöver vara.
 - **Den dämpar HÖG-frekvent vibration** (raketmotor, fallskärmsfladder, ~50–500 Hz):
   mjuka skum-/elastomerkuddar (~5 mm, E≈50 kPa) ger en monterad resonans på
   ~15–25 Hz → dämpning av allt ovanför ~30 Hz. Här räcker 4–6 mm gott.
+  **Kvantifierat:** f_n=(1/2π)√(K/m), K=E·A/t — med m=0,2 kg, 4 kuddar à 10×10 mm,
+  5 mm, E≈40 kPa → f_n≈**20 Hz**, statisk kompression 12 % (inom 5–15 %-riktlinjen),
+  transmissionsfaktor **0,19 vid 50 Hz, 0,04 vid 100 Hz, ~0,002 vid 500 Hz**
+  ([E-A-R-guiden](https://www.aearotechnologies.com/wp-content/uploads/2022/11/basicsvibrationisolationelastomericmaterials.pdf),
+  [Barry Controls](https://wp.optics.arizona.edu/optomech/wp-content/uploads/sites/53/2016/08/Barry-isolators-selection-guide.pdf)).
 - **Den isolerar INTE fallskärmspendlingen** (~0,5–2 Hz). En pendel rör hela burken
   som en enhet — ingen praktisk fjäder isolerar den i 1 g. Tjockare isolering hjälper
   alltså inte mot det stora hotet i §8.1; det är därför man inte ska offra plats på
   "kraftigare" isolering.
 - **Vid 20 G krävs stopp (snubbers), inte tjock isolering:** ett mjukt montage med
-  ~5 mm förtryck bottnar redan vid ~5–8 G. Lösningen är korta stopptappar som modulen
-  tar emot mot vid hög G (skummet komprimeras som stötupptagare i stället för att
-  isolera). Så även om du ville ha 20 mm skum skulle det inte lösa 20 G — stopp gör det.
+  ~5 mm förtryck bottnar redan vid ~5–8 G (20 G × 0,62 mm ≈ 12 mm ≫ 5 mm fjäderväg →
+  bottnar vid ~8 G). Lösningen är korta stopptappar med 1–2 mm luftspalt som modulen
+  tar emot mot vid hög G (skummet komprimeras som stötupptagare). Så även om du ville
+  ha 20 mm skum skulle det inte lösa 20 G — stopp gör det.
+- **Stöten, inte vibrationen, dimensionerar mekaniken:** finska besiktningens
+  1 m-golvsläpp ger v≈4,4 m/s → vid ~5 mm krossning ≈ **200 G**; US-guiden anger
+  separat 15 G vibration och 30 G shock. Konstruera för stöt (struktur + stopptappar),
+  isolera för kontinuerlig 50–500 Hz.
+- **Kallguiden:** elastomerer hårdnar vid kyla (naturgummi stelnar nära -25 °C) —
+  välj silikon-/PU-skum och **testa isoleringen i frysen vid -25 °C före marktest**.
 - **Isoleringen gör dubbel tjänst som värmeisolering** — mjukt skum har låg
   värmeledning. Tejpa den ihop med termisk isoleringsring runt kammaren så täcker
   samma 4–6 mm både vibration och en del av kylbudgettsskyddet.
+  ⚠️ **Varning (radialt läckage):** 4–5 mm mjukt skum runt modulen släpper igenom
+  grovt ~2 W radialt (0,04 × 0,0086 m² × 30 K / 0,005 m) — i samma klass som hela
+  kylbudgeten 1,5–3 W. Räkna om med den slutgiltiga geometrin; överväg tjockare
+  isolering i axiell riktning där det finns plats.
 
 #### Radiell budget (burkens Ø 66 mm)
 
@@ -807,8 +861,9 @@ elektronikvärmen).
    på tävlingsområdet, eller installera kylplattan sent?)
 4. Gäller 2-h-regeln **hela systemet** eller bara telemetri/sensorsystemet?
    (Påverkar hybrid-Peltier-alternativet.)
-5. Får kammaren vara **tät** (ingen tryckutjämning), och tål burken ~0,9 atm
-   differenstryck vid 1 km + övertryck vid 20 G?
+5. Får kammaren vara **tät** (ingen tryckutjämning), och tål burken ~0,1 atm
+   differenstryck vid 1 km (standardatmosfär ~0,89 atm → Δp ≈ 11 kPa + upp till
+   ~10–13 kPa från värmetestet 60 °C)? 20 G ger däremot försumbart gastryck (≈30 Pa).
 6. Är det OK att burken är **isolerad** (kan inte vara standardläskburkens väggtjocklek
    utan egen cylinder)?
 7. Får vi **ventilationshål** i burken för elektronikkylning (eller ska all värme ledas
@@ -817,6 +872,9 @@ elektronikvärmen).
    tävlingsområdet, och hur sent före start får kylplattan installeras? (Avgör om
    PCM-metoden fungerar och om vi kan använda lägre-tempererad eutektik/IPA — se
    §4.3, §4.7 och §4.10.)
+9. **Vad händer vid väderuppskov?** Enligt erfarenheterna 2025 flög bara 5 av 13 burkar
+   fredagen (vind 10–16 m/s) — resten lördag. Har hotellet/arrangemanget en frys, och
+   kan vi omfrysa enheten över natten? (Krävs om PCM:en ska klara 24 h.)
 9. Finns ett **krav på värmetest** (t.ex. 60 °C i 2 h som i internationella
    [CanSat-guiden](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf))?
    Soluppvärmning på startplattan?
@@ -935,12 +993,44 @@ med spår som bonus — vilket redan är en världspremiär för CanSat. Alla å
    lov och god logistik.
 2. **Alkohol: etanol 95 %+ i första hand** (fungerar med -21 °C platta), IPA om
    Peltier/tillstånd tillåter. **Specialtillstånd måste sökas skriftligt oavsett** —
-   gör det nu (anmälan till tävlingen öppnar 10.9.2026).
+   gör det nu (projektpresentation + videopitch senast **11.12.2026**).
 3. **Tidslinje från frys till start är den kritiska okända** — fråga arrangören.
 4. **Sätt rätt målbild**: teknikdemonstration + temperatursensorik + video;
    synliga partikelspår är bonus. Marktest först!
 5. Läs också ESAs [Cloud chamber – radioactivity in a cosmic setting](https://education.esa.int/cloud-chamber-radioactivity-in-a-cosmic-setting-teach-with-space-p03/)
    (färdigt lektionsupplägg som grund för dokumentationen).
+
+## 9.5 Checklista — saker som saknas / tas i beaktan (från granskning 2026-11-02)
+
+Saker granskningsagenterna flaggade som ännu inte lösta i designen. Kryssa av vart och
+ett i pre-launch-rapporten:
+
+1. **Frost/kondens på kylplattan:** fukten i en förseglad kammare (tiotals mg vattenånga)
+   räcker för en frosthinna som förstör kontrasten. → Torka/purga kammaren med torrgas
+   eller lägg torkmedel före tätning; testa.
+2. **Imma på kamerafönstret:** fönstret sitter i temperaturgradienten (CADMUS
+   misslyckades på optiken). → Värm fönsterkanten (motståndstråd/ITO), testa i fuktig miljö.
+3. **Tryck/tätning:** rätt Δp 10–11 kPa vid 1 km (+10–13 kPa i värmetestet) — dimensionera
+   fönster/O-ringar/kuppeln därefter; koppla ventilationshåls-frågan till tätningsdesignen.
+4. **Data/radio:** 60–120 s video 2 MP/20 fps ≈ 100–300 MB via SD (OK), men **LoRa kan
+   inte sända bilder** — verifiera att inga live-bildkrav finns och att GPS/blipp räcker
+   för återhämtning.
+5. **Batteri i kyla:** LiPo tappar 30–50 % kapacitet under -20 °C och får spänningsfall
+   vid strobe-pulser. → Lägg batteriet i isolerad elektronikdel; dimensionera med köldfaktor.
+6. **Startleverantörens krav:** fråga efter vind-/säkerhetsregler, alkoholhantering vid
+   rampen och vem som monterar den frysta modulen (Rocket Ranges Finland/arrangör).
+7. **Fallskärm:** verifiera CdA för ~350 g + 8–11 m/s mot ESA-guiden; antenn/GPS under
+   rotation/spinn.
+8. **Filtens vätska vid 20 G:** axial G pressar ut etanol → droppar/falska spår.
+   → Fixera filten med nät/dränering; skakbordstest.
+9. **EMC:** 200 A-strobar kan störa GPS/LoRa — håll drivaren borta från antennerna,
+   konkret EMC-test.
+10. **Vibrationsskum ↔ PCM-termik:** skummet är isolator och kraftväg samtidigt;
+    testa PCM-påsens integritet vid skak/stöt.
+11. **Statistik för höjdmätningen:** kameran ensam kan inte påvisa +30 %-effekten
+    (Poisson-σ ≈ 25–60 %) — kombinera med scintillator/räknare + markmätning före/efter.
+12. **Etanoldosering:** 5–10 ml till en Ø 50-filt (mättnad ~4–6 ml) → risk för rinnande
+    alkohol; kalibrera mot filten.
 
 ## 10. Källförteckning
 
@@ -1013,3 +1103,16 @@ med spår som bonus — vilket redan är en världspremiär för CanSat. Alla å
 - [Ferguson & Nuth 1999, "The influence of buoyant convection on the upward thermal diffusion cloud nucleation chamber"](https://pubs.aip.org/aip/jcp/article/111/17/8013/184268/The-influence-of-buoyant-convection-on-the)
 - [ESA teach with space, "Parachute design for CanSat" (nedfärdsprofil 8–11 m/s)](https://cansat.esa.int/wp-content/uploads/2023/09/T10_Parachute_Design_EN.pdf)
 - [Canadian CanSat Design Challenge 2024-25 Requirements (20 G, launch profile)](http://csdcms.ca/Docs/CSDC_CanSat_Requirements_2024-25.pdf)
+- [Finska CanSat-guiden (nedfart 5–12 m/s, 50 N-fallskärmsfäste, PLR 20.2.2027, poängviktning)](https://www.esero.fi/finnish-cansat-competition-guidelines)
+- [Edugalaxen, CanSat 2026 i Vasa (lanseringsdagen, 15-minuterskadens)](https://edugalaxen.com/2026/03/26/march-26-29-cansat-competition-in-vaasa-finland/)
+- [Edugalaxen, CanSat 2025 (bara 5 av 13 fredag p.g.a. vind)](https://edugalaxen.com/2025/03/28/cansat-competition-2025-in-vasa-finland/)
+- [SATS (Suomalainen Astronautti), rapport 2026 (H219-apogeum 750 m)](https://www.suomalainenastronautti.fi/blogi/2026/03/30/50503)
+- [SATS, rapport 2025 (~30 G uppmätt)](https://www.suomalainenastronautti.fi/blogi/2025/04/09/48514)
+- [OV5640-datablad (5 MP, 1,4 µm pixlar, rolling shutter)](https://s1-dl.theimagingsource.com/api/2.5/packages/publication/sensor-omnivision/ov5640/98284436-e865-5de5-a517-7a514df571b6/ov5640_1.0.en_US.pdf)
+- [Improwis kamerawebb (OV9281 global shutter 1 MP, kamerasensorer)](http://improwis.com/notes/cam.webt)
+- [E-A-R/Aearo, "The Basics of Vibration Isolation" (f_n, transmission)](https://www.aearotechnologies.com/wp-content/uploads/2022/11/basicsvibrationisolationelastomericmaterials.pdf)
+- [Barry Controls Design Guide (isolatordimensionering)](https://wp.optics.arizona.edu/optomech/wp-content/uploads/sites/53/2016/08/Barry-isolators-selection-guide.pdf)
+- [Grupen & Shwartz 2023, "Historical track detectors" (jonkärnor ~10 ms, fotograferbar ~100 ms, återhämtning 1–10 min)](https://doi.org/10.1017/9781009401531.009)
+- [CERN/Uspekhi-not: droppar ≥2 µm radie synliga via Mie-spridning](https://doi.org/10.5170/cern-2001-007.154)
+- [Vietti 1972, doktorsavhandling (fallhastighet 1,06 cm/s vid 10 µm)](https://scholarsmine.mst.edu/cgi/viewcontent.cgi?article=3084&context=doctoral_dissertations)
+- [Doronin & Moskvichev 2020, "Analysis of aerospatial foam" (J. Phys. Conf. Ser.)](https://doi.org/10.1088/1742-6596/1441/1/012091)
