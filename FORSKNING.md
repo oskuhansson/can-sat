@@ -348,22 +348,53 @@ innebär att en vanlig hemfrys (-18 °C) i praktiken **inte laddar ens SP-21 (~-
 | Rubitherm **SP-24** | -22…-23 °C | **250 kJ/kg** ([datablad](https://www.rubitherm.eu/media/products/datasheets/Techdata_-SP-24_EN_03092026.PDF)) | 1,1–1,2 | ~290 | **-30 °C** (supercooling ~4 K!) |
 | PlusICE **E-21** | -21 °C | 285 kJ/kg | 1,24 | 353 kJ/L | Frys under ~-25…-28 °C |
 | PlusICE **E-22** | -22 °C | **305 kJ/kg** | 1,18 | 360 kJ/L | Frys under ~-25…-28 °C |
+| **savE HS23N** (PLUSS, SE) | -23 °C | 274 kJ/kg ([plussat.eu](https://plussat.eu/save-pcm-product-range/)) | ~1,2 | ~330 | Frys under ~-27…-28 °C |
 | PlusICE **E-26** | -26 °C | 265 kJ/kg | 1,25 | 331 kJ/L | Frys under ~-30…-33 °C |
+| **savE HS26N** (PLUSS, SE) | -26 °C | 264 kJ/kg | ~1,2 | ~320 | Frys under ~-30…-33 °C |
+| **savE HS30N** (PLUSS, SE) | -30 °C | 264 kJ/kg | ~1,2 | ~320 | Frys under ~-33…-35 °C |
 | PlusICE **E-29** | -29 °C | 250 kJ/kg | **1,42** | 355 kJ/L | Frys under ~-33 °C |
 | PlusICE **E-32** | -32 °C | 225 kJ/kg | 1,29 | 290 kJ/L | Frys under ~-36 °C |
 | Rubitherm **SP-28 / SP-30** | -28…-30 °C | 250–260 kJ/kg | 1,1–1,2 | ~290 | **Frys ≤-35 °C** |
 | savEnrg **PCM-HS23N** | -23 °C | 200 kJ/kg ([datablad](http://www.rgees.com/documents/savENRG%20PCM-Products%20(T).pdf)) | 1,18 | 236 kJ/L | **≤-28 °C, "freeze completely"** |
 
 (PlusICE E-serie: [Range 2021](https://www.pcmproducts.net/files/PlusICE%20Range%202021-1.pdf);
-SP-seriens supercoolingsiffror: [Rubitherm "Remarks on supercooling"](https://www.rubitherm.eu/media/products/datasheets/Remarks-on-supercooling-hysteresis-and-other-properties-of-the-SP-products.pdf).)
+SP-seriens supercoolingsiffror: [Rubitherm "Remarks on supercooling"](https://www.rubitherm.eu/media/products/datasheets/Remarks-on-supercooling-hysteresis-and-other-properties-of-the-SP-products.pdf);
+savE = [PLUSS Advanced Technologies, Sverige — hela sortimentet -75…+89 °C](https://plussat.eu/save-pcm-product-range/).)
+
+### 4.10.3 Bästa valet med kJ/kg som primärt mått (fönstret -24…-30 °C)
+
+Om man prioriterar **lagringskapacitet per massa (kJ/kg)** och vill ha en smältpunkt i
+**-24…-30 °C** (där **isopropanol** fungerar bra och man har termisk marginal), så blir
+rankingen ur källorna ovan:
+
+| Plats | PCM | Smältpunkt | Latent (kJ/kg) | Kommentar |
+|---|---|---|---|---|
+| 🥇 | PlusICE **E-26** | -26 °C | **265** | Bäst publicerade kJ/kg i fönstret; beprövad E-serie |
+| 🥈 | savE **HS26N / HS30N** (SE) | -26…-30 °C | **264** | **Svenskt företag (PLUSS)** → lätta att köpa i Finland; pouches/paneler |
+| 🥉 | Rubitherm **SP-28** | -28…-29 °C | **260** | Tysk, makroinkapsling ≥50 ml; kräver -35 °C frys |
+| 4 | PlusICE E-29 | -29 °C | 250 | Bäst volymetrisk (ρ=1,42 → 355 kJ/L) men lägre per kg |
+| 5 | PlusICE E-32 | -32 °C | 225 | Utanför fönstret, sämre per kg |
+
+**Viktig avvägning att vara medveten om:** de *absolut bästa* kJ/kg-värdena ligger strax
+utanför det önskade fönstret — **E-22 vid -22 °C ger 305 kJ/kg** och SP-21/E-21 ger
+285 kJ/kg vid -21 °C (etanol-vägen). Väljer man E-22 får man ~15 % mer kyla per gram,
+men smältpunkten -22 °C gör isopropanol **marginell** (IPA-tröskeln ~-25 °C) — då bör man hellre sikta på etanol eller Peltier-hybrid.
+Inom ert uttalade mål-intervall är
+**E-26 (265 kJ/kg) det massoptimala valet**, och **savE HS26N/HS30N (264 kJ/kg)** är det
+praktiskt enklaste att beställa från Sverige till Finland.
+
+**Beräkning för massbudgeten:** 60 g E-26 → 0,06 × 265 = **15,9 kJ latent** + ~1–2 kJ
+sensibelt. Vid 2 W värmelast ≈ **2,2 h kylvärde**; vid 3 W ≈ 1,5 h. Marginalsiffror som
+bekräftar §6.2:s massbudget (60–100 g PCM räcker för 2–4 h-vilan + 2 min flygning).
 
 **Slutsats för laddning (kritiskt):**
 - **Etanol-vägen (-21 °C):** vill man göra det med *ren* hemfrys måste man acceptera en
   svagare ~20 %-NaCl-lösning (smältpunkt ~-16,5 °C, marginal mot etanolkravet) eller
   hitta en **-25 °C-frys** (många storköks-/industrifrysar klarar det; fråga skolans
   kök!). En riktig **-30 °C-labbfrys** laddar dessutom SP-24/E-22.
-- **IPA-vägen (-30 °C):** kräver torris, LN₂ eller industrifrys ≤-35 °C — alltså mer
-  logistik, men allt detta finns beskrivet i §4.7 (torris på plats) / §4.9 (LN₂).
+- **IPA-vägen (-26…-30 °C, dvs. E-26/HS26N/HS30N/SP-28):** kräver torris, LN₂ eller
+  industrifrys ≤-30…-35 °C — alltså mer logistik, men allt detta finns beskrivet i
+  §4.7 (torris på plats) / §4.9 (LN₂).
 - **Supercooling = praktiskt problem i lilla volym:** Rubitherm anger 0,5–3 K typiskt
   ("mindre volym → mindre supercooling"). Vår puck (~50–80 ml) hamnar i den milda änden,
   men ta det på allvar: **frys in minst 4–8 °C under smältpunkten** och låt den stå i
@@ -897,6 +928,7 @@ med spår som bonus — vilket redan är en världspremiär för CanSat. Alla å
 - [savEnrg PCM-Products (PCM-HS23N -23 °C, 200 kJ/kg, frys ≤-28 °C)](http://www.rgees.com/documents/savENRG%20PCM-Products%20(T).pdf)
 - [Xu 2024, "Thermal Expansion Challenges for PCM Encapsulation" (volymexpansion, fyll 85–90 %)](https://onlinelibrary.wiley.com/doi/10.1002/adfm.202409884)
 - [Översikt: PCM-korrosion (aluminium korroderar; rostfritt mest kompatibelt)](https://www.sciencedirect.com/science/article/abs/pii/S2352152X23004024)
+- [PLUSS Advanced Technologies (Sverige), "Full savE PCM-produktrange -75…+89 °C" (HS23N 274, HS26N/HS30N 264 kJ/kg)](https://plussat.eu/save-pcm-product-range/)
 - [Cowan 1949, "A Large Cloud Chamber Using Rear Illumination" (flugit i B-29 på 13,5 km)](https://www.pp.rhul.ac.uk/~cowan/EWC/RevSciInstrum_20_492.pdf)
 - [Adams (Caltech), "Cloud Chamber Studies in Cosmic Rays at an Altitude of 30,000 Feet"](https://doi.org/10.7907/dvvv-ts23)
 - [Bertelsmann & Heist 1997, "Thermal diffusion cloud chamber. II. Stability of operation"](https://pubs.aip.org/aip/jcp/article/106/2/624/479112/Two-dimensional-transport-and-wall-effects-in-the)
