@@ -498,6 +498,43 @@ kammaren**, så behövs bara en liten extravärmare (0,5–1 W) för att nå 30�
 ingen alls. Två flugor i en smäll: elektroniken kyls av den kalla omgivningen, och
 toppen värms "gratis". (Detta var också CADMUS-lösningens andemening — se §8.)
 
+### 4.11.3 Toppvärmaren — hur mycket effekt och energi kräver den?
+
+För att toppen ska hålla +30…40 °C i mars-väder (~0 °C utomhus) måste värmaren täcka
+alla värmeförluster från toppregionen:
+
+**Steady-state-effekt (effekt att hålla toppen på 30–40 °C):**
+
+| Förlustväg | Uppskattning |
+|---|---|
+| Ned i kammaren (konvektion + strålning, = samma last som kallplattan får) | ~1–2 W |
+| Upp genom burkisolationen (topp, 10–15 mm XPS, Ø50) | ~0,2–0,5 W |
+| **Summa att ersätta** | **~1,2–2,5 W** |
+
+- Med elektronikens spillvärme (1–2 W, §4.11.2d) täckt → **nettobehov bara ~0–1,5 W**,
+  alternativt ingen separat värmare alls.
+- En konduktionskalkyl: XPS k≈0,035 W/mK, Ø50 (A≈0,002 m²), ΔT≈38 K, 12 mm tjock
+  → Q = 0,035 × 0,002 × 38 / 0,012 ≈ **0,22 W** upp. Med 5 mm i stället: ~0,5 W.
+  Så toppisolationen är inte den stora lasten — konvektionen nedåt är det.
+
+**Engångsuppvärmning (från vila):** 5–10 ml etanol + filt uppvärmd från ~0 till 40 °C
+(första gången) är bara ~0,2–0,3 Wh — försumbar.
+
+**Energi över 2 h (viktigast för batteribudgeten):**
+
+| Driftsfall | Effekt | Energi på 2 h |
+|---|---|---|
+| Värmer kontinuerligt utan elektronik-hjälp | ~2 W | ~4 Wh ⚠️ |
+| Elektronikspillvärme täcker halva behovet | ~1 W | ~2 Wh |
+| **Värmer bara under ~1 h före start (termostat)** | ~1–1,5 W | **~1–1,5 Wh** ✅ |
+| Plus engångsuppvärmning en gång | — | +0,2–0,3 Wh |
+
+**Slutsats:** toppvärmaren är *den enskilt största* potentiella energiposten — men bara
+om den drivs kontinuerligt i 2 h. Med termostat/PWM, elektronikspillvärme i toppen och
+**"kammaren varm först strax före start"** (§4.11.2b, motåtgärd 2) krymper den till
+~1–2 Wh — väl inom 2S LiPo-budgeten (7,4–11 Wh). Kör man tvärtom kontinuerligt 2 W i
+2 h (4 Wh) hamnar batteriet nära gränsen → planera för standby-läge.
+
 ## 5. Alkoholen — isopropanol vs etanol vs metanol, och tillståndsfrågan
 
 | Ämne | Flampunkt | Botten-temp som krävs | För/nackdelar |
