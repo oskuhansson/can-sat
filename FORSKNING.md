@@ -487,6 +487,69 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
 - Genomför **marktest på skolbänken först**: thoriumstav (svetsmunstycke) eller
   radon i källaren ger rikliga spår att öva triggerns tröskel och bildsekvensen på.
 
+### 6.5 Dimensionering — hur tjock vibrationsisolering och ryms allt i burken?
+
+**Kort svar: 4–6 mm mjuka kuddar runt/under kammarmodulen räcker, och burken (Ø 66 ×
+115 mm) rymmer allt.** Det viktiga är *vad* isoleringen ska göra — och det begränsar
+hur tjock den behöver vara.
+
+#### Vad isoleringen faktiskt gör (avgör tjockleken)
+
+- **Den dämpar HÖG-frekvent vibration** (raketmotor, fallskärmsfladder, ~50–500 Hz):
+  mjuka skum-/elastomerkuddar (~5 mm, E≈50 kPa) ger en monterad resonans på
+  ~15–25 Hz → dämpning av allt ovanför ~30 Hz. Här räcker 4–6 mm gott.
+- **Den isolerar INTE fallskärmspendlingen** (~0,5–2 Hz). En pendel rör hela burken
+  som en enhet — ingen praktisk fjäder isolerar den i 1 g. Tjockare isolering hjälper
+  alltså inte mot det stora hotet i §8.1; det är därför man inte ska offra plats på
+  "kraftigare" isolering.
+- **Vid 20 G krävs stopp (snubbers), inte tjock isolering:** ett mjukt montage med
+  ~5 mm förtryck bottnar redan vid ~5–8 G. Lösningen är korta stopptappar som modulen
+  tar emot mot vid hög G (skummet komprimeras som stötupptagare i stället för att
+  isolera). Så även om du ville ha 20 mm skum skulle det inte lösa 20 G — stopp gör det.
+- **Isoleringen gör dubbel tjänst som värmeisolering** — mjukt skum har låg
+  värmeledning. Tejpa den ihop med termisk isoleringsring runt kammaren så täcker
+  samma 4–6 mm både vibration och en del av kylbudgettsskyddet.
+
+#### Radiell budget (burkens Ø 66 mm)
+
+| Lager | Tjocklek |
+|---|---|
+| Burkvägg (aluminiumcylinder) | ~1 mm × 2 |
+| Mjuk vibrations-/isoleringskuddar runt kammarmodulen | ~4–5 mm × 2 |
+| Kammarmodul (kupol Ø 48–50) | 50 mm |
+| **Summa** | **50 + 8–10 + 2 = 60–62 mm ≤ 66 mm** ✅ |
+
+→ Ryms med marginal; om kupan görs Ø 48 får man ännu mer luft.
+
+#### Axiell budget (burkens höjd 115 mm)
+
+| Lager (uppifrån) | Tjocklek |
+|---|---|
+| Topplock + fästpunkt fallskärm/hårdpunkt | ~5 mm |
+| Kammarkupol (känsligt skikt ~20–25 mm + felt + värmare) | ~38 mm |
+| Kylplatta (eloxerad aluminium) | 3 mm |
+| **PCM-puck (Ø ~58–60, ~50–60 g → ~45–50 ml)** | **18–20 mm** |
+| Vibrations-/termisk skumplatta (axiell dämpning) | 5–6 mm |
+| Elektronik + kamera | 10–12 mm |
+| LiPo (flat cell) | 8 mm |
+| Bottenstruktur + PCM-isolering (XPS 10–15 mm) | 12–15 mm |
+| **Summa** | **~95–105 mm ≤ 115 mm** ✅ |
+
+→ Ryms med ~10–20 mm marginal för toleranser/kablar. Bottnen får den tjocka
+termiska isoleringen (där finns platsen och där sitter PCM:ens blottade sida mot
+elektronikvärmen).
+
+#### Nyckeln till att få ihop det
+
+1. **Håll PCM-plattan rund och bred (Ø 58–60)** i stället för hög — 50 ml i en Ø 58-puck
+   blir bara ~18–20 mm högt. Tjockleken axiellet är den dimension som räknas.
+2. **Värmeisoleringen (15–20 mm XPS) sitter på PCM:ens undersida** — där finns platsen
+   och den skärmar mot elektronikens 1–2 W.
+3. **Vibrationsdämpningen är tunn (4–6 mm) per design**, eftersom den bara ska hantera
+   högfrekvens + stöt — pendelgången kan ingen fjäder isolera ändå.
+4. Kamera/elektronik staplas axialt; behövs mer höjd nås det genom att sänka
+   kupans Ø till 48 och platta till PCM-pucken, inte genom tjockare isolering.
+
 ## 7. Frågor att ställa arrangören (innan designen låses)
 
 1. Får vi flyga en **förseglad kammare med ≤ 10 ml etanol/isopropanol** om vi lämnar
