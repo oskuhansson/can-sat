@@ -1,0 +1,243 @@
+# WiFi-hotspot i CanSat — forskningsöversikt
+
+*Skapad 2026-11-02. Syfte: undersöka om det är genomförbart att göra CanSaten till en
+"WiFi-hotspot från himlen" (Starlink-liknande) — en high-gain-antenn på burken som ger
+telefoner på marken trådlös uppkoppling under nedfärden, med plats kvar för annan
+elektronik och sensorer. Dokumentet ersätter cloud-chamber-spåret som primärt uppdrag.*
+
+---
+
+## 1. Uppdraget och målbilden
+
+**Målet:** CanSaten bär en accesspunkt (WiFi-hotspot) som telefoner på marken kan
+ansluta till när den faller, "lite som Starlink". Lagets fokus: en robust antenn med
+tillräckligt hög gain som ryms i/får plats på burken, eventuellt styrbar, plus gott om
+plats för övrig elektronik/sensorer.
+
+**Viktig ärlighet direkt:** en CanSat har *ingen internetupling*. Phones som ansluter
+till hotspoten får alltså inte "riktig" internet — de når CanSatens **egen webbserver**
+(live-telemetri, grafer, kamerabilder, m.m.). Det är fortfarande ett utmärkt och väldigt
+synligt uppdrag ("anslut till satelliten från din telefon!"), men jämförelsen med
+Starlink gäller *tekniken att ge marken uppkoppling från en rörlig plattform*, inte
+internetåtkomst. (Googles [Project Loon](https://www.technologyreview.com/technology/project-loon/)
+använde för övrigt **LTE**, inte WiFi, bland annat därför att WiFi-bandet är trångt —
+och Loon hängde på ~20 km höjd med 40 km täckningsradie.)
+
+**Realistisk kärna att utvärdera:**
+1. Når WiFi-signalen telefonerna alls från ~1 km (länkbudget)?
+2. Vilken antenndesign ryms på/i en 66 mm-burk och ger mest nytta?
+3. Behöver antennen styras, och kan det göras robust med motorer — eller är ett fast
+   nedåtriktat fält bättre?
+4. Var hamnar elektroniken, antennen och styrningen i 300–350 g-budgeten?
+
+## 2. Fysiken — länkbudgeten är gynnsammare än man tror
+
+**Fri rymd-vägdämpning (FSPL) — kärnsiffran:**
+
+| Avstånd | 2,4 GHz | 5 GHz |
+|---|---|---|
+| 250 m | 88 dB | 95 dB |
+| 500 m | 94 dB | 102 dB |
+| 1000 m | **100 dB** | **108 dB** |
+
+FSPL = 20·log₁₀(4πdf/c) [rftools](https://rftools.io/calculators/rf/rf-link-budget/).
+**6 dB per fördubblad distans**, 6 dB mellan 2,4 och 5 GHz → **2,4 GHz är rätt band**.
+Obs: +0,5 dB atmosfärisk förlust per km, försumbar; markreflexion/multipath kan kosta
+~3–10 dB i öppet fält utanför idealfallet.
+
+**Länkbudget uppifrån (burken) till telefon (marken):**
+
+| Väg | Uppifrån→ner (EIRP 20 dBm) | Telefon→upp (TX ~15 dBm) |
+|---|---|---|
+| Avsändare | 20 dBm EIRP (lagstak, se §4) | ~15 dBm EIRP (telefoner är svaga) |
+| FSPL 1 km | −100 dB | −100 dB |
+| Mottagar-antennkl| tel. ~0 dBi | burkens antenn G dB |
+| Mottager vid 1 km | **~−80 dBm** | **−85 + G dBm** |
+| Kan telefon+användare klara det? | WiFi −80 dBm = *marginal till att fungera* (1–6 Mb/s) | med G≥10 dBi: −75 dBm — bra |
+
+Slutsats: **redan en obetydlig antenn (0–3 dBi) ger WiFi-uppkoppling på låg hastighet
+runt ~500 m–1 km slantavstånd.** En high-gain-antenn (10 dBi+) gör stor skillnad på
+*upplänken* (telefon → burk), som annars är flaskhalsen, och fokuserar utsändningen mot
+marken. Distributed 2,4 GHz-hastigheter vid −80 dBm ≈ 1–6 Mb/s — räcker för
+telemetri-sidor och bilder, inte storskalig surf.
+
+**Tidsfönstret:** apogeum 750–1100 m + nedfärd 8–11 m/s ger ~70–120 s där slantavståndet
+till marktelefoner krymper. Den bästa "Starlink-stunden" uppstår sista ~30 s ned mot
+landning när slantavståndet < 300–500 m. Flyghöjden i [finska CanSat](https://www.esero.fi/cansat-kilpailu)
+är ~1 km (750 m 2026), dvs. väsentligt lägre än Loon — det *hjälper* oss (kortare FSPL).
+
+## 3. Regler — det lagliga EIRP-taket ändrar "high gain"-strategin
+
+**Det viktigaste fyndet:** i Finland (EU/CEPT [Regulation 15](https://traficom.fi/en/radio-licences-and-frequencies/users-radio-equipment/buying-and-using-radio-equipment))
+är effektgränsen för 2,4 GHz WLAN **EIRP ≤ 100 mW (20 dBm)** — det är *strålad* effekt
+inklusive antennförstärkning. Konsekvenser:
+
+- Man får **inte lovligt skicka 30 dBm EIRP** bara för att man har en 12 dBi-antenn;
+  TX-utgången måste dämpas så att EIRP ≤ 20 dBm.
+- **High gain är därför inte till för att "blåsa ut mer power"** utan för att (a) ta emot
+  telefonens svaga upplänk (det är där vinsten är stor), (b) fokusera den tillåtna
+  20 dBm mot marken (mindre energi åt fel håll → effektivare), och (c) reducera
+  störningar från andra riktningar.
+- **Frequency channels i Finland** ([Wi-Fi RegDB](https://regdb.lizardsystems.com/country/FI)):
+  2,4 GHz kanal 1–13 (13/14 användbara), 20 dBm. 5 GHz: 5150–5250 = 200 mW men
+  **indoor-only** (−5 GHz-användning utomhus begränsad), 5250–5350 = 100 mW + DFS radar,
+  5470–5725 = 500 mW + DFS, 5725–5875 = 25 mW. → **2,4 GHz är det robusta valet utomhus**;
+  5 GHz 5470–5725 kräver DFS-loggning som är jobbig i en fallande burk.
+- CE-märkning + EU-deklaration krävs (Traficom); en egenbyggd sändare måste uppfylla
+  EN 300 328 — håll dig här till färdiga, CE-märkta WiFi-moduler (ESP32/Raspberry Pi
+  Zero + modul) med fastappliserade antenner, inga förstärkare.
+
+**CanSat-antenregler (finskt):** antenner får vara **utanpå burken** (som GPS/LoRa), och
+utrymmet ovanför burken är **4,5 cm axialt** (fallskärm + fäste + antenner måste rymmas)
+— se [finska guiden](https://www.esero.fi/finnish-cansat-competition-guidelines). Det
+betyder att en stor panelantenn antingen måste vika ihop innanför Ø66 mm tills den
+lämnat raketen, eller klara sig i ≤4,5 cm-locket.
+
+## 4. Antennalternativ som får plats
+
+| Typ | Gain | Storlek som ryms? | Bedömning |
+|---|---|---|---|
+| **Patch (kvartsvågsplattor), 1–4 element** | 3–8 dBi | 30–80 mm → **ryms i burken!** | ⭐ **Basrekommendation** — billig, robust, inga rörliga delar |
+| Mikrostrip-array (liten) | 5–7 dBi | ~60–80 mm → ryms | Bra upplänkshjälp, enkelt |
+| **Täthopbekränkt panel, 8–12 dBi** (t.ex. [LevelOne WAN-2121](https://www.level1.com/level1_en/wan-2121-12dbi-2-4ghz-directional-panel-antenna-54046107), 140×166×30 mm / [Taoglas FG.27](https://www.taoglas.com/product/fg-27-a-super-compact-12dbi-2-4ghz-directional-panel-antenna/) 210×210 mm) | 10–12 dBi | **Större än burken**, >0,3 kg | Kräver utfällbar mekanik → komplicerat och tungt |
+| Yagi (kickad, 8–10 element) | 8–10 dBi | ~60–120 cm lång | För lång; måste fällas ut efter utkast — riskabelt |
+| **Omni-stav** (1/2–5/8 λ) | 2–3 dBi | ~10–30 mm Ø, kort stav | Enkelt, men når bara ~500 m–1 km marginal |
+| **Phased array** (2,4 GHz) | teoretiskt → $ via beamforming | λ/2 ≈ 62 mm/el → 4×2 kräver ~25×13 cm | **Ryms inte** + komplex + (se §6) |
+
+**Slutsats:** det som *faktiskt får plats i en 66 mm-burk* är små patch/mikrostrip-
+antenner på **~3–8 dBi**. Det är fullt tillräckligt för att lyfta upplänken och för
+hotspot-tänket (länkbudgeten ovan visar att även 0 dBi räcker på låg hastighet). Att
+jaga >10 dBi kräver en utfällbar panel som (a) inte får sticka ut ur Ø66 mm före
+utkast, (b) måste tåla 20–30 G vid utlösning, (c) tar nästan hela 4,5 cm-locket.
+
+**Nyckelinsikt:** en **fast nedåtriktad patch-array i burkens botten**, som "tittar mot
+marken under hela nedfärden", ger i praktiken en högriktad täckning mot där telefonerna
+är — utan motorer och utan styrning. Gungning under fallskärm vidgar bara lampkonen
+(hur mycket beror på pendelvinkeln, se §5).
+
+## 5. Att peka antennen — motorer vs fast fält
+
+**Fallskärmsgungningen är det verkliga problemet** (samma som i §8.1 i
+FORSKNING.md): CanSaten gungar och roterar under fallskärmen. Ett fast "nedåt"
+antennfält i botten täcker konen där marken alltid befinner sig så länge gungningen
+moderat. Mät data: pendelvinklar ökar konutbredningen.
+
+| Lösning | Fördelar | Nackdelar |
+|---|---|---|
+| **Fast nedåtriktad patch** | Robust, 0 W mekanik, inget som kan fastna | Täckning = kon under burken; sämst om spinn/vingel stort |
+| **Pan-tilt med mikroservon** ([Adafruit kit](https://www.adafruit.com/product/1967), ~37 g, SG-90-servon) | Kan följa en specifik markstation | Kräver IMU + 2-axlig reglerloop mot ett snurrande/gungande fällande objekt — **svårt**; servot slår vid 20–30 G; ~37–50 g extra |
+| Profesjonella pan-tilt-steg (t.ex. [OES PT60](https://www.oesincorp.com/motorized-multi-axis-stages/motorized-pan-tilt-mounts.htm)) | Precisionsstyrning | Långt över mass/kostnadsbudget (paket 10 kg-klass) — **ej CanSat** |
+| **Phased array** | Elektronisk styrning, inga rörliga delar | Ryms inte (se §4); komplex; dyr |
+
+**Bedömning:** för 2027-uppdraget rekommenderas **fast nedåtriktad antenn** — robusthet
+vinner, och 20 dBm-EIRP-taket gör att den extra directionella vinsten mest märks på
+upplänken. **Motorer/gimbal blir ett stretch-mål eller numeriskt äventyr**, inte
+bärlinje. Om ni verkligen vill följa en markstation, titta på bärbara "auto-tracking"
+patch-servomoduler för drönare — men dimensionera för G-belastningen och testa på
+skakbordet.
+
+## 6. Phased array — bedömning (lagets hypotes "lovande men dyr")
+
+Hypotesen stämmer: **phashed arrays är fortfarande inte rätt för en CanSat-burk:**
+
+1. **Storlek:** λ/2-avståndet vid 2,4 GHz ≈ 62 mm. En användbar array (≥8 element,
+   ≥~6 dBi + bearning) blir 25×13 cm (t.ex. [ESPARGOS One, 4×2, €350](https://espargos.net/espargos-one/)).
+   Den **ryms inte i Ø66 mm** och tar nästan all massa.
+2. **Kostnad:** ESPARGOS One €350 (inkl. 8 dubbelpolära antenner, [ethernet/PoE, ~3,5 W](https://espargos.net/espargos-one/))
+   *nästan* i 500 €-budgeten, men det är **forsknings-/sensigutrustning** (CSI/IQ-analys,
+   radar) — inte en färdig accesspunkt som telefoner kan ansluta till. Att bygga om den
+   till en hotspot-serverande AP + beamforming-FW är ett fullständigt eget projekt.
+3. **Juridik:** TX-beamforming kräver sändningstillstånd (amatörradio/licens) enligt
+   ESPARGOS-dokumentation — strider mot "licensfri 20 dBm"-vägen för skoluppdrag.
+
+**Slutsats:** phased array är rätt svar för "swarm/measurement" i större formfaktorer,
+inte för en 330 ml-burk som ska ge telefoner WiFi 2027. Anteckna som "framtida
+utvecklingsspår" snarare än plan A.
+
+## 7. Elektronik, plats för sensorer och massbudget
+
+WiFi-lösningen är **enklare och mycket mer platsvänlig** än cloud-chambern (ingen
+PCM, ingen isolering, ingen kamera-optik):
+
+| Komponent | Typisk post/kostnad | Massa |
+|---|---|---|
+| Processer + WiFi (ESP32-modul, ~2,4 GHz, 20 dBm) | ~5–15 € | ~5–15 g |
+| Alternativ: Raspberry Pi Zero 2W + USB WiFi (~30 €) | ~15–40 € | ~15–25 g |
+| Antenn (patch 3–8 dBi, IPEX) | ~3–15 € | ~5–15 g |
+| Pan-tilt-servon (valfritt, se §5) | ~10–30 € | ~37–50 g |
+| Primärmissionstab (T/P, IMU, GPS) + radio (LoRa) | ~25–60 € | ~20–40 g |
+| **Valfri sensor-lägg** (kamera, magnetometer, strålning) | budget | 10–40 g |
+| Batteri (2S LiPo ~10 Wh) | ~15–30 € | 50–70 g |
+| Struktur/fallskärm | ~20–40 € | 70–90 g |
+| **Summa (utan servo, sparsam)** | **~100–200 €** | **~180–270 g** ✅ |
+| **Summa (med servo-styrning)** | ~130–230 € | ~220–320 g ✅ |
+
+→ **Det finns gott om plats** för extra sensorer och för att leka med antenn/gimbal,
+samtidigt som ±< 350 g-kravet hålls. Effekten: ESP32-modul drar ~0,1–0,3 W (lite åt
+gången), RPi Zero 2W ~0,5–1,5 W — 2S LiPo räcker långt över 2 h-kravet (finskt) / 4 h
+(ESA-internationellt, [Luxemburg-manualen](https://www.esero.lu/wp-content/uploads/2026/02/Teams-Manual-2025-2026-Luxembourg-CanSat-Competition-v3.pdf)
+kräver 4 h).
+
+**Sensorer som blir naturliga kompisar:** temperatur/tryck (primär), IMU + GPS
+(attityd → antenntäckningsanalys!), fotosensor, magnetometer, kamera. IMU-GPS är
+speciellt värdefulla: de låter er korrelera **när uppkopplingen fungerade** med burkens
+attityd — det blir en riktigt bra "vetenskaplig" del av missionen.
+
+## 8. Förebilder och tidigare bevis
+
+- **[Project Loon](https://www.technologyreview.com/technology/project-loon/)** —
+  största beviset på "uppkoppling från himlen till telefoner"; men valde **LTE** (inte
+  WiFi) bl.a. p.g.a. WiFi-bandets störningskänslighet. Vår poäng: de *absoluta* avstånden
+  här (~1 km) är 20–40× kortare än Loon, vilket kompenserar WiFi:s sämre räckvidd.
+- Länkbudget/verktyg: [rftools.linkbudget](https://rftools.io/calculators/rf/rf-link-budget/)
+  och SprintWave-FSPL-guiden — bekräftar siffrorna i §2.
+- Långdistans-WiFi-bryggor (t.ex. [TP-Link Beam Bridge 5, 15 km @ 23 dBi](https://www.omadanetworks.com/us/business-networking/omada-wifi-wireless-bridge/beam-bridge-5-ur-kit/))
+  visar att WiFi *kan* nå mycket långt med riktningsantenner — men de kräver stora
+  antenner och låga EIRP-tak tillämpas inte alltid. Dessa är referens för "vad som är
+  fysikaliskt möjligt om man hade plats", inte för vår burk.
+- Ingen hittad offentlig finsk CanSat har gjort en WiFi-hotspot tidigare → stark
+  nyhet/outreach.
+
+## 9. Rekommendation
+
+1. **Baslinje:** ESP32 med **2,4 GHz 20 dBm**, fast **nedåtriktad patch-antenn 3–8 dBi**
+   i burkens botten → telefonernas captive-portal visar live-telemetri/webbserver.
+   Robust, enkel, inom 500 € och 350 g med stor marginal.
+2. **Förstärkt variant (samma dag):** lägg till IMU+GPS och en andra omni-antenn, mät
+   faktisk prestanda mot attityd.
+3. **Stretch (om tid):** motoriserad pan-tilt till en specifik markstation — med tydlig
+   dokumentation att det är ett mekatroniskt riskuppdrag (testas på skakbord + i -20 °C).
+4. **Ej nu:** phased array (ryms inte, för komplex, licensfråga) och >10 dBi-paneler
+   (kräver utfällning som är riskabel vid 20–30 G och konflikt med 4,5 cm-locket).
+5. **Regler att fråga arrangören:** exakt antennbekrivning i Pre-Launch Report
+   (SDS-nivå: max 15 sidor, engelska, deadl. 20.2.2027); att en egenbyggd WiFi-sändare med
+   fastappliserad antenn och CE-märkt modul är acceptabel; att telefonkoppling inte
+   stör LoRa-telemetrin (kanalval); och att hotspot-användningen rapporteras enligt
+   Regulation 15.
+
+## 10. Öppna frågor att ställa arrangören
+
+1. Accepteras en **fast applikantenn utanpå burken** som överskrider Ø66 mm *efter*
+   utkast (utfällbar), eller måste allt hålla Ø66 mm hela tiden?
+2. Får telefoner registreras mot hotspoten (enligt Regel 15-intentionen) eller endast
+   för test?
+3. Krockar 2,4 GHz-hotspot med tilldelade LoRa-frekvenser/andra lag (kanalplan)?
+4. Får vi en **andra frekvens/tid** för WiFi om LoRa kräver 868–915 MHz-länken?
+5. Finns krav på att hotspoten stängs av i markläge (landning) eller får den fortsätta?
+
+## 11. Källförteckning
+
+- [Traficom, "Buying and using radio equipment" (licensfritt WLAN, CE, Regulation 15)](https://traficom.fi/en/radio-licences-and-frequencies/users-radio-equipment/buying-and-using-radio-equipment)
+- [Wi-Fi RegDB Finland (kanaler/EIRP: 2,4 GHz 20 dBm; 5 GHz DFS/indoor-begränsningar)](https://regdb.lizardsystems.com/country/FI)
+- [RF Link Budget Calculator (FSPL, EIRP, marginer)](https://rftools.io/calculators/rf/rf-link-budget/)
+- [SprintWave, "Free Space Path Loss" (FSPL förklarat, 2,4 vs 5 GHz)](https://www.sprintwave.co.uk/ccnp-wireless/rf_fundamentals/fspl)
+- [Project Loon översikt (MIT Tech Review)](https://www.technologyreview.com/technology/project-loon/)
+- [Project Loon tekniskt (Network World: LTE 2,2/2,6 GHz, 40 km radie)](https://www.networkworld.com/article/940020/two-years-on-googles-project-loon-drifts-into-focus.html)
+- [LevelOne WAN-2121 12 dBi 2,4 GHz panel (storlek/vikt)](https://www.level1.com/level1_en/wan-2121-12dbi-2-4ghz-directional-panel-antenna-54046107)
+- [Taoglas FG.27 12 dBi panelantenn](https://www.taoglas.com/product/fg-27-a-super-compact-12dbi-2-4ghz-directional-panel-antenna/)
+- [ESPARGOS One — 2,4 GHz phas ed array, €350, 4×2, PoE](https://espargos.net/espargos-one/)
+- [Adafruit Mini Pan-Tilt Kit (37 g, mikroservon)](https://www.adafruit.com/product/1967)
+- [OES motoriserad pan-tilt (60 mm, precisionsteg)](https://www.oesincorp.com/motorized-multi-axis-stages/motorized-pan-tilt-mounts.htm)
+- [TP-Link Beam Bridge 5 UR (15 km @ 23 dBi — vad WiFi kan med plats)](https://www.omadanetworks.com/us/business-networking/omada-wifi-wireless-bridge/beam-bridge-5-ur-kit/)
+- [Finska CanSat-guiden (4,5 cm-utrymme, regler, PLR)](https://www.esero.fi/finnish-cansat-competition-guidelines)
+- [Luxemburg CanSat Teams Manual (4 h-batteri-regel)](https://www.esero.lu/wp-content/uploads/2026/02/Teams-Manual-2025-2026-Luxembourg-CanSat-Competition-v3.pdf)
