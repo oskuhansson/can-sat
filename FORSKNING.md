@@ -162,9 +162,92 @@ Vid 1 km är luften bara ~5–10 °C kallare än vid marken. ~-25 °C kräver ak
 eller förfryst massa. (Intressant dock: kall omgivning *hjälper* topp-→botten-gradienten
 och minskar värmeläckaget in i plattan.)
 
-## 4.6 Energi och värme — hur mycket drar burken, och blir värmen ett problem?
+### 4.6 Stirling-kylare / mikro-kryokylare — aktiv kylning i rymdklass (men för dyr och tung nu)
+Mikro-kryokylare av Stirlingtyp är den teknik som kylsensorer i riktiga satelliter/IR-kameror.
+Exempel: [LE-TEHNIKA SRI421](https://cryocoolers.eu/integral-miniature-stirling-cryogenic-cooler-025w/) —
+12 V, **<5 W i drifthåll vid 80 K (= -193 °C!)**, <14 W under nedkylning (~5 min),
+**<200 g**, MTBF >10 000 h. För en cloud chamber behövs bara ~-25…-40 °C (= ~230–250 K),
+vilket Stirling-kylaren når med **avsevärt lägre effekt** än vid 80 K.
+- Fördelar: rymdkvalitet, beprövad, nedkylning på minuter, klarar -40…+71 °C omgivning.
+- Nackdelar: kostnad (~1500–1700 €/enhet enligt [Arctic-Tek MiniCool-serien](https://www.arctic-tek.com/store/categories/Stirling%20Cryocooler))
+  → **långt över 500 €-budgeten**, plus vikt (~200 g + styrenhet) i en 300–350 g-burk.
+- **Slutsats:** fysikaliskt idealisk, men för dyr och för tung för CanSat i dag. Värd att
+  ha i bakfickan som referens och för en framtida campingkylare-baserad vidareutveckling.
 
-### 4.6.1 Energibudget (utan Peltier)
+### 4.7 CO₂-patron / Joule–Thomson — "torris på plats" 🧊
+Joule–Thomson-expansion av flytande CO₂ från en sifonbehållare ger **torrissnö vid
+-78 °C direkt på plats**, utan någon frys: bärbara "portable dry ice makers"
+([Agar Scientific](https://mcprod.agarscientific.com/portable-dry-ice-maker),
+[Bel-Art Frigimat](https://belart.com/products/cold-cryo/dry-ice-makers/frigimat-dry-ice-maker/))
+producerar ~0,5–1 kg torrisblock på 1–2 minuter ur en flytande CO₂-cylinder med dykrör.
+- **Detta löser logistikproblemet i §4.3:** i stället för att frakta torris (eller behöva
+  en ≤-25 °C-frys) till startplatsen, **generera torrisen på plats** och packa den runt
+  kylplattan eller som laddning av en lägre-tempererad PCM (§4.10).
+- För CanSat: en liten **sifon-CO₂-patron** (t.ex. sodastream-/kolsyrepatron) räcker för
+  att skapa torrissnö. Kräver hantering av -78 °C-snö (vantar, skyddsglasögon), tryckkärl
+  (ADR-reglerad, fråga arrangören) och får inte medföras förseglat (övertryck om den töms i
+  sluten volym).
+- Slutsats: **utmärkt som "torrisrörligt lager" vid tävlingsorten** för att frysa en
+  PCM-platta strax före start — kombineras med passiv metod.
+
+### 4.8 Vortex-rör (Ranque–Hilsch) — kyla ur tryckluft
+Ett [vortex-rör](https://www.sciencedirect.com/science/article/abs/pii/S1364032115007509)
+separerar tryckluft i en varm och en kall ström — inga rörliga delar, ingen el, inget
+köldmedium. Upp till **70 °C temperatursänkning**; kommersiella enheter kyler med luft
+vid ~700 kPa; CO₂, syre och kväve ger lägre temperaturer än luft ([Oberlin-demo](https://www2.oberlin.edu/physics/catalog/demonstrations/thermo/vortextube.html):
+Tc < 0 °C "easily").
+- Lockande i teorin (cloud chamber nedkylning "gratis" ur tryckluft), men praktiskt för
+  CanSat **olämpligt**: kräver en trycklufts-/gasbehållare med kontinuerligt flöde (tung,
+  tar slut, bullrigt), separat varm-utlopp som måste frånluftas ur burken, och effektiv
+  kylning av plattan kräver god värmeövergång. Bättre som **markdemonstration** (ingen
+  Peltier, ingen frys behövs — kul fysiklek!).
+
+### 4.9 Flytande kväve (LN₂) — snabbast, men bara för laboratorium/startplats
+Standard i universitetsdemonstrationer: [UT Austin](https://lecturedemos.ph.utexas.edu/demo/311)
+och [Vanderbilt](https://www.vanderbilt.edu/physicsdemonstration/davesdemos/demonstrations/demo106.htm)
+häller LN₂ (-196 °C) i kärl under plattan — spår i 5–20 min per påfyllning, med etanol.
+- För CanSat: **inte lämpligt ombord** — kokar bort (förseglad volym → övertryck), kräver
+  dewarkärl, hantering runt skolungdom och raketbana är riskfyllt, och boil-off äter
+  kylan snabbt. Däremot utmärkt **vid skolan/startplatsen** för att snabbt förfrysa en
+  PCM-platta eller ladda en lägre-tempererad eutektik (§4.10) innan den isoleras — om en
+  institution (universitet/sjukhus) kan låna ut dewarn.
+
+### 4.10 Lägre-tempererade eutektiska PCM:er — nyckeln till isopropanol
+Passiv PCM behöver inte stanna på -21 °C! Det finns kommersiella saltvatten-eutektika
+ned till långt under noll:
+- [Rubitherm SP-serien](https://www.rubitherm.eu/en/productcategory/anorganische-pcm-sp):
+  **SP-24 (-23…-22 °C), SP-28 (-29…-28 °C), SP-30 (-30…-29 °C)** med ~250–260 kJ/kg,
+  ända till SP-50 (-52…-48 °C, 190 kJ/kg).
+- [PlusICE-katalogen](https://www.pcmproducts.net/files/eutectic_catalogue-2011-1.pdf)
+  (PCM Products) har lösningar från -100 °C till +89 °C, i påsar/plattor; används i
+  kylkedjor och lastbilar ([Mousazade & Rafee 2020](https://www.sciencedirect.com/science/article/abs/pii/S0140700720303753)
+  testar E-26/E-29/E-32-paneler).
+- **Konsekvens:** med en SP-30-platta kan plattan hålla ~-30 °C passivt → **isopropanol
+  fungerar** (som kräver -25…-40 °C), och marginalen mot etanolens -21 °C blir stor.
+- **Laddningskravet är den enda haken:** PCM:en måste frysas *under* sin smälttemperatur,
+  dvs. SP-30 kräver ≤-30 °C (industrifrys, LN₂ eller torris — den senare skapas gratis
+  med CO₂-patron-metoden i §4.7). Vanlig hemfrys (-18 °C) laddar bara NaCl-brinen (-21 °C).
+- Slutsats: **passiv metod + lägre-tempererad eutektik (SP-24/28/30) laddad med torris/LN₂
+  = bästa vägen till IPA**, om laddningslogistiken ordnas (§7, fråga 8).
+
+### 4.10.1 Sammanfattning — alla kylmetoder på en gång
+
+| Metod | Temp | Elbehov | Vikt/budget | Dom |
+|---|---|---|---|---|
+| **Passiv PCM (NaCl -21 °C, §4.3)** | -21 °C | 0 W | ~100–160 g, billig | ⭐ **Baslösning** — etanol, överallt |
+| **Passiv PCM låg-temp (SP-24/28/30, §4.10)** | -24…-30 °C | 0 W | ~100–160 g, måttlig | ⭐ **om ni får IPA + kylmedel** — bästa kvalitet |
+| Torris (§4.1) | -78 °C | 0 W | liten | Med lov; logistikbesvärlig |
+| CO₂-patron/JT (§4.7) | -78 °C (snö) | 0 W | liten | 🧊 **Bra "torris på plats"** som stöd |
+| Peltier-flersteg (§4.2) | -25…-40 °C | 50–200 W | ~100–200 g | Marktest/hybrid — inte ombord |
+| Stirling-mikrokryo (§4.6) | -80 K-klass | <5–14 W | ≥200 g, 1500+ € | Rymdklass men för dyr/tung |
+| Minikompressor (§4.4) | -25…-40 °C | 30–100 W | >720 g | För tung (dubbla CanSat!) |
+| Vortex-rör (§4.8) | <0 °C (till ~-70 ΔT) | tryckluft | cylinder | Markdemonstration endast |
+| LN₂ (§4.9) | -196 °C | 0 W | dewar | Bara labb/startplats (laddning) |
+| Kall luft på höjden (§4.5) | ~-5…-10 °C | 0 W | 0 | Räcker inte |
+
+## 4.11 Energi och värme — hur mycket drar burken, och blir värmen ett problem?
+
+### 4.11.1 Energibudget (utan Peltier)
 
 | Del | Effekt |
 |---|---|
@@ -181,7 +264,7 @@ och minskar värmeläckaget in i plattan.)
   **helt uteslutet**. Ännu ett skäl till passiv PCM-kylning.
 - Slutsats: **energin är inget problem** så länge Peltier inte används. Värmen är det.
 
-### 4.6.2 Värmen är problemet — på tre sätt
+### 4.11.2 Värmen är problemet — på tre sätt
 
 **(a) Värmeläckage in i kalla plattan — den kritiska budgeten.**
 Kammaren ska ha +30…40 °C på toppen och -21 °C i botten, bara ~5 cm från varandra.
@@ -408,9 +491,10 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
    utan egen cylinder)?
 7. Får vi **ventilationshål** i burken för elektronikkylning (eller ska all värme ledas
    ut via aluminiumväggen)?
-8. Finns en **riktig frys (≤-25 °C)** eller motsvarande på tävlingsområdet, och hur
-   sent före start får kylplattan installeras? (Avgör om PCM-metoden fungerar — se
-   §4.3 och §4.6.)
+8. Finns en **riktig frys (≤-30 °C)** eller **tillgång till torris/CO₂-patron/LN₂** på
+   tävlingsområdet, och hur sent före start får kylplattan installeras? (Avgör om
+   PCM-metoden fungerar och om vi kan använda lägre-tempererad eutektik/IPA — se
+   §4.3, §4.7 och §4.10.)
 9. Finns ett **krav på värmetest** (t.ex. 60 °C i 2 h som i internationella
    [CanSat-guiden](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf))?
    Soluppvärmning på startplattan?
@@ -496,3 +580,13 @@ kamerans färgkanaler, så det kan stå på konstant utan att störa RGB-bilden.
 - [UVic, "Cloud Chamber Equations" (Bethe-Bloch, Stokes, tillväxtekvation)](https://particle.phys.uvic.ca/~jalbert/chamber.pdf)
 - [Wilson et al. 2014, "Performance evaluation of an overdriven LED for high-speed schlieren imaging" (LED-överdrivning 10–200 A)](https://doi.org/10.1007/s12650-014-0220-7)
 - [Frozentime Images/Uppsala, "High-speed LED flashgun" (RGB-filtrerade µs-LED-blixtar på 10 µm-droppar)](http://frozentime.se/ljus/high_speed_leds.html)
+- [LE-TEHNIKA SRI421, integrerad Stirling-mikrokryokylare 0,25 W (12 V, <200 g)](https://cryocoolers.eu/integral-miniature-stirling-cryogenic-cooler-025w/)
+- [Arctic-Tek Stirling-kylare / MiniCool priser](https://www.arctic-tek.com/store/categories/Stirling%20Cryocooler)
+- [Agar Scientific, "Portable Dry Ice Maker" (torris via Joule–Thomson)](https://mcprod.agarscientific.com/portable-dry-ice-maker)
+- [Bel-Art Frigimat, "Dry Ice Maker" (454 g-block på 1–2 min)](https://belart.com/products/cold-cryo/dry-ice-makers/frigimat-dry-ice-maker/)
+- [Subudhi & Sen 2015, "Review of Ranque–Hilsch vortex tube experiments using air"](https://www.sciencedirect.com/science/article/abs/pii/S1364032115007509)
+- [Oberlin, "Hilsch-Ranque Vortex Tube" (demonstration)](https://www2.oberlin.edu/physics/catalog/demonstrations/thermo/vortextube.html)
+- [UT Austin, "Cloud Chamber" (LN₂-demo)](https://lecturedemos.ph.utexas.edu/demo/311)
+- [Vanderbilt, "Demonstration Cloud Chamber" (LN₂ + etanol)](https://www.vanderbilt.edu/physicsdemonstration/davesdemos/demonstrations/demo106.htm)
+- [PCM Products, "PlusICE Eutectic Catalogue" (PCM:er -100…+89 °C)](https://www.pcmproducts.net/files/eutectic_catalogue-2011-1.pdf)
+- [Mousazade & Rafee 2020, "Cold panels with PCM in a refrigerated truck" (E-26/E-29/E-32)](https://www.sciencedirect.com/science/article/abs/pii/S0140700720303753)
