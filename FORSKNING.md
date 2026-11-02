@@ -140,9 +140,15 @@ Precis som [Arbor Scientific Cloud Chamber](https://www.arborsci.com/products/cl
 
 - **0 W effekt under flygning** — uppfyller 2 h-regeln och 500 €-budgeten.
 - Massa: koppar/aluminiumplatta 50 mm Ø × 3 mm ≈ 50 g + PCM-påse ~50–80 g.
-- Fryses i vanlig frys (-18…-24 °C) kvällen innan, transporteras i isolerad låda
-  (styrox/kylbox) till startplatsen. **Nyckelfråga: hur lång tid från frys till
-  start?** Check-in → start kan vara timmar (se §7, fråga arrangören).
+- Fryses kvällen innan och transporteras i isolerad låda (styrox/kylbox) till
+  startplatsen. **Varning: NaCl-brinen fryser först vid -21,2 °C** — en vanlig
+  hemfrys (-18 °C) räcker inte för eutektisk koncentration; använd en svagare
+  lösning (~20 %, fryspunkt ~-16 °C) i hemfrys, eller helst en riktig frysbox
+  (snabbköps-/laboratoriefrys, ≤-25 °C) för full kylkapacitet
+  ([Radebe & Huan 2023](https://www.sciencedirect.com/science/article/pii/S2352152X23003572)).
+  Fråga skolan/arrangören om tillgång till kall frys på tävlingsorten!
+- **Nyckelfråga: hur lång tid från frys till start?** Check-in → start kan vara
+  timmar (se §7, fråga arrangören).
 - Med -21 °C platta: välj **etanol** (fungerar varmare än IPA, [Bellevue](https://www.bellevuecollege.edu/physics/resources/cloudchmbr/),
   [UW-Madison](https://medphysics.wisc.edu/wp-content/uploads/2021/04/Cloud-Chamber-Lesson-Plan.pdf)).
 - Isolera burken (styrox/XPS 1–2 cm) så håller plattan kall under väntan och flygning.
@@ -155,6 +161,78 @@ Precis som [Arbor Scientific Cloud Chamber](https://www.arborsci.com/products/cl
 Vid 1 km är luften bara ~5–10 °C kallare än vid marken. ~-25 °C kräver aktiv kylning
 eller förfryst massa. (Intressant dock: kall omgivning *hjälper* topp-→botten-gradienten
 och minskar värmeläckaget in i plattan.)
+
+## 4.6 Energi och värme — hur mycket drar burken, och blir värmen ett problem?
+
+### 4.6.1 Energibudget (utan Peltier)
+
+| Del | Effekt |
+|---|---|
+| MCU (Arduino/ESP32) | 0,1–0,5 W |
+| Radio 1 Hz (LoRa) | 0,1–0,5 W |
+| Sensorer + GPS | 0,05–0,2 W |
+| Kamera + SD + LED | 0,6–2 W |
+| Toppvärmare (termostat, PWM) | 0,5–2 W |
+| **Totalt (~medel)** | **~2–4 W** |
+
+- **2 h-regeln:** 2–4 W × 2 h = **4–8 Wh** → t.ex. 2S LiPo 1000–1500 mAh (7,4–11 Wh,
+  50–70 g) räcker. Alternativt 2× 18650 (~18 Wh, ~100 g) med stor marginal.
+- Jämför med Peltier (50–200 W): 2 h skulle kräva 100–400 Wh ≈ 1–4 kg batteri →
+  **helt uteslutet**. Ännu ett skäl till passiv PCM-kylning.
+- Slutsats: **energin är inget problem** så länge Peltier inte används. Värmen är det.
+
+### 4.6.2 Värmen är problemet — på tre sätt
+
+**(a) Värmeläckage in i kalla plattan — den kritiska budgeten.**
+Kammaren ska ha +30…40 °C på toppen och -21 °C i botten, bara ~5 cm från varandra.
+Läckaget ned mot plattan (räknat för Ø50 mm, höjd 50 mm):
+
+| Väg | Uppskattat läckage |
+|---|---|
+| Genom luften i kammaren (konduktion) | ~0,06 W |
+| Genom kammarväggen (akryl 3 mm) | ~0,1 W |
+| Värmestrålning topp→botten | ~0,3–0,6 W |
+| Konvektion inuti kammaren | 0,5–1,5 W (störst, svår att undvika) |
+| PCM-paketets yta mot burkens insida (2 cm XPS) | ~0,3–0,5 W |
+| **Summa på kallplattan** | **~1,5–3 W** |
+
+Med mindre noggrann isolering/konvektion kan det bli 3–5 W — då är kylbudgeten slut
+på nolltid.
+
+**(b) PCM:ns kylbudget = livslängd för experimentet.**
+NaCl-eutektikum 23,3 % smälter vid **-21,2 °C** med latent värme **228–257 kJ/kg**
+([MDPI 2021](https://www.mdpi.com/1996-1074/14/11/3033), [Radebe & Huan 2023](https://www.sciencedirect.com/science/article/pii/S2352152X23003572)).
+
+| PCM-massa | Latent energi | Tid till slut vid 2 W | vid 3 W |
+|---|---|---|---|
+| 60 g | ~15 kJ | ~2,1 h | ~1,4 h |
+| 80 g | ~20 kJ | ~2,8 h | ~1,9 h |
+| 100 g | ~25 kJ | ~3,5 h | ~2,3 h |
+
+**Detta är dimensionerande:** check-in → start kan vara 1–4 h (officiellt ska CanSaten
+vara inlämnad kl 12, lansering 13 → i värsta fall timmar i vila) + 2 min flygning.
+Med 80–100 g PCM och ~2 W läckage klarar man 2–3 h — men marginalen är tunn. Tre
+motåtgärder: (1) minimera läckaget (isolering, låg emissivitet på plattans ovansida,
+hindra konvektion med tunn folie/lager), (2) håll kammaren **avstängd** (ingen
+toppvärmare) tills strax före start så att gradienten bara byggs upp när det behövs,
+(3) förvara den frysta enheten i en **isolerad transportlåda/kylbox ända fram till
+integreringen**. Lägg till fråga till arrangören: när exakt integreras/startas burken?
+
+**(c) Elektronikvärme i en isolerad burk — överhettning.**
+2–4 W kontinuerligt i en **helt** isolerad 330 ml-burk (2 cm XPS överallt) ger
+innertemperatur som kan stiga ~50 K över omgivningen — batteri och kamera mår dåligt
+över 60–70 °C. Lösningar: isolera **endast kammaren/PCM**, låt elektronikdelen sitta
+mot burkväggen av aluminium (värmeväg ut, typisk ΔT bara ~10–15 K i mars-väder) och/eller
+ha små ventilationshål (fråga arrangören om det är tillåtet). Räkna också med
+soluppvärmning på startplattan — den internationella CanSat-guiden kräver att burken
+tål 60 °C i 2 h i värmekammare ([CanSat 2026-guide §3.3](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf));
+fråga om finska regler har motsvarande krav.
+
+**(d) Bonus — låt elektroniken värma toppen.**
+MCU + radio + kamera avger 1–2 W spillvärme. Placera elektroniken **i toppen av
+kammaren**, så behövs bara en liten extravärmare (0,5–1 W) för att nå 30–40 °C — eller
+ingen alls. Två flugor i en smäll: elektroniken kyls av den kalla omgivningen, och
+toppen värms "gratis". (Detta var också CADMUS-lösningens andemening — se §8.)
 
 ## 5. Alkoholen — isopropanol vs etanol vs metanol, och tillståndsfrågan
 
@@ -240,6 +318,16 @@ arrangören.
    differenstryck vid 1 km + övertryck vid 20 G?
 6. Är det OK att burken är **isolerad** (kan inte vara standardläskburkens väggtjocklek
    utan egen cylinder)?
+7. Får vi **ventilationshål** i burken för elektronikkylning (eller ska all värme ledas
+   ut via aluminiumväggen)?
+8. Finns en **riktig frys (≤-25 °C)** eller motsvarande på tävlingsområdet, och hur
+   sent före start får kylplattan installeras? (Avgör om PCM-metoden fungerar — se
+   §4.3 och §4.6.)
+9. Finns ett **krav på värmetest** (t.ex. 60 °C i 2 h som i internationella
+   [CanSat-guiden](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf))?
+   Soluppvärmning på startplattan?
+10. Electronicans **spillvärme** (1–2 W) — OK att den används för att värma
+    kammartoppen?
 
 ## 8. Vad kan vi realistiskt mäta? (fysik, ärligt talat)
 
@@ -310,3 +398,7 @@ arrangören.
 - [Cambridge HEP outreach, "Cloud Chamber" (designtips)](https://www.hep.phy.cam.ac.uk/outreach/cloud)
 - [CERN S'Cool LAB, "Cloud Chamber DIY manual"](https://scoollab.web.cern.ch/sites/default/files/documents/20200521_JW_DIYManual_CloudChamber_v7.pdf)
 - [QuarkNet/Fermilab, "How to Build a Cosmic-Ray Cloud Chamber"](https://quarknet.fnal.gov/resources/QN_CloudChamberV1_4.pdf)
+- [Stamatiou et al. 2021, "Experimental Characterization of PCMs for Refrigeration" (MDPI Energies — NaCl 23,3 %: -21,2 °C, ~257 kJ/kg)](https://www.mdpi.com/1996-1074/14/11/3033)
+- [Radebe & Huan 2023, "Low-cost eutectic salts for cold storage" (J. Energy Storage — NaCl ~-21 °C, ~228 kJ/kg)](https://www.sciencedirect.com/science/article/pii/S2352152X23003572)
+- [Rubitherm SP-seriens PCM (saltvatten, -21…-50 °C)](https://www.rubitherm.eu/en/productcategory/anorganische-pcm-sp)
+- [CanSat Mission Guide 2026 (internationella regler: värmetest m.m.)](https://cansatcompetition.com/docs/CanSat_Mission_Guide_2026e.pdf)
