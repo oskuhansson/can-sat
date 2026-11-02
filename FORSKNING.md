@@ -332,6 +332,69 @@ ned till långt under noll:
 | LN₂ (§4.9) | -196 °C | 0 W | dewar | Bara labb/startplats (laddning) |
 | Kall luft på höjden (§4.5) | ~-5…-10 °C | 0 W | 0 | Räcker inte |
 
+### 4.10.2 PCM i detalj — datablad, supercooling och laddningskrav ⚠️
+
+**Viktigast först — laddningsfysiken avgör vilken PCM ni faktiskt kan använda.**
+PCM:ns *smältpunkt* = temperaturen plattan håller under fasomvandlingen (kylan "köps"
+när materialet smälter). Men för att *ladda* (frysa) materialet måste frysen vara klart
+*under* smältpunkten, annars kristalliserar saltvatten-PCM:en inte (supercooling). Det
+innebär att en vanlig hemfrys (-18 °C) i praktiken **inte laddar ens SP-21 (~-21 °C)**:
+
+| PCM | Smältpunkt | Latent värme | Densitet | Vol. kapacitet | Rek. frys (enl. datablad) |
+|---|---|---|---|---|---|
+| **Hemma-NaCl 20 %** | ~-16,5 °C | ~250 kJ/kg | ~1,15 | ~290 kJ/L | ~-18…-20 °C (hemfrys, marginellt) |
+| **Hemma-NaCl 23,3 % (eut.)** | **-21,2 °C** | 228–257 kJ/kg ([MDPI](https://www.mdpi.com/1996-1074/14/11/3033)) | 1,17–1,18 | ~270–300 | **≤-25 °C** |
+| Rubitherm **SP-21** | -19…-21 °C | **285 kJ/kg ±7,5 %** ([datablad](https://www.rubitherm.eu/media/products/datasheets/Techdata_-SP-21_EN_03092026.PDF)) | 1,1–1,2 | ~320–340 | **-25 °C** (supercooling ~2 K) |
+| Rubitherm **SP-24** | -22…-23 °C | **250 kJ/kg** ([datablad](https://www.rubitherm.eu/media/products/datasheets/Techdata_-SP-24_EN_03092026.PDF)) | 1,1–1,2 | ~290 | **-30 °C** (supercooling ~4 K!) |
+| PlusICE **E-21** | -21 °C | 285 kJ/kg | 1,24 | 353 kJ/L | Frys under ~-25…-28 °C |
+| PlusICE **E-22** | -22 °C | **305 kJ/kg** | 1,18 | 360 kJ/L | Frys under ~-25…-28 °C |
+| PlusICE **E-26** | -26 °C | 265 kJ/kg | 1,25 | 331 kJ/L | Frys under ~-30…-33 °C |
+| PlusICE **E-29** | -29 °C | 250 kJ/kg | **1,42** | 355 kJ/L | Frys under ~-33 °C |
+| PlusICE **E-32** | -32 °C | 225 kJ/kg | 1,29 | 290 kJ/L | Frys under ~-36 °C |
+| Rubitherm **SP-28 / SP-30** | -28…-30 °C | 250–260 kJ/kg | 1,1–1,2 | ~290 | **Frys ≤-35 °C** |
+| savEnrg **PCM-HS23N** | -23 °C | 200 kJ/kg ([datablad](http://www.rgees.com/documents/savENRG%20PCM-Products%20(T).pdf)) | 1,18 | 236 kJ/L | **≤-28 °C, "freeze completely"** |
+
+(PlusICE E-serie: [Range 2021](https://www.pcmproducts.net/files/PlusICE%20Range%202021-1.pdf);
+SP-seriens supercoolingsiffror: [Rubitherm "Remarks on supercooling"](https://www.rubitherm.eu/media/products/datasheets/Remarks-on-supercooling-hysteresis-and-other-properties-of-the-SP-products.pdf).)
+
+**Slutsats för laddning (kritiskt):**
+- **Etanol-vägen (-21 °C):** vill man göra det med *ren* hemfrys måste man acceptera en
+  svagare ~20 %-NaCl-lösning (smältpunkt ~-16,5 °C, marginal mot etanolkravet) eller
+  hitta en **-25 °C-frys** (många storköks-/industrifrysar klarar det; fråga skolans
+  kök!). En riktig **-30 °C-labbfrys** laddar dessutom SP-24/E-22.
+- **IPA-vägen (-30 °C):** kräver torris, LN₂ eller industrifrys ≤-35 °C — alltså mer
+  logistik, men allt detta finns beskrivet i §4.7 (torris på plats) / §4.9 (LN₂).
+- **Supercooling = praktiskt problem i lilla volym:** Rubitherm anger 0,5–3 K typiskt
+  ("mindre volym → mindre supercooling"). Vår puck (~50–80 ml) hamnar i den milda änden,
+  men ta det på allvar: **frys in minst 4–8 °C under smältpunkten** och låt den stå i
+  frysen över natten (~12–24 h), inte bara ett par timmar.
+
+**Korrosion — måste inkapslas!**
+- [Rubitherms SP-produkter uttryckligen: "avoid contact with metals... direct contact
+  with different metals must be reliably prevented (galvanic cell)"](https://www.rubitherm.eu/media/products/datasheets/Remarks-on-supercooling-hysteresis-and-other-properties-of-the-SP-products.pdf)
+  och en [översiktsartikel om PCM-korrosion](https://www.sciencedirect.com/science/article/abs/pii/S2352152X23004024)
+  visar att **rostfritt stål är mest kompatibelt med de flesta PCM:er, medan aluminium
+  korroderar för de flesta**. → **PCM:en måste vara innesluten i en tät HDPE-/polymerpåse,
+  aldrig i direkt kontakt med aluminiumplattan** (galvanisk korrosion + gropfrätning).
+  Lägg påsens vägg mellan platta och PCM (tunt HDPE räcker).
+- Alla kommersiella lösningar ovan levereras/kan fyllas i sådana påsar: [Rubitherm
+  makroinkapsling (HDPE, min. 50 ml)](https://www.rubitherm.eu/en/productcategory/makroverkapselung-k%C3%BChlakkus),
+  [PlusICE-pouches (metall-/polymerfolie)](https://www.pcmproducts.net/Encapsulated_PCMs.htm),
+  savEnrg-pouches. Vid egen tillverkning: **dubbelsvetsad påse** (t.ex. frys-/ziplock-påse
+  omsluten av vakuumfolie för att stänga ute fukt — SP är hygroskopiskt och tar upp fukt
+  om den lämnas öppen).
+
+**Volymexpansion och hantering:**
+- Saltbuffrade PCM:er utvidgas något vid smältning och vissa saltvatten-eutektika har
+  stora volymändringar i sluten burk ([Xu 2024, översikt](https://onlinelibrary.wiley.com/doi/10.1002/adfm.202409884))
+  → **fyll påsen till ~85–90 %**, aldrig till 100 %, och placera påsen så att den kan
+  bukta fritt (den gamla ackumulatorn ska inte spricka i burken).
+- Max arbetstemperatur för SP-produkter ~60 °C → inget problem i vår burk, bara
+  håll undan från värmekammaren-testet i §7-fråga 9 (60 °C i 2 h kan vara nära gränsen).
+
+**Praktisk puck-dimension (från §6.5):** 60 g NaCl-brin eller ~50 ml SP-21/E-22 i en
+Ø 58-påse (fylld till 90 %) blir ~15–18 mm tjock — dimensioneringen i §6.5 står sig.
+
 ## 4.11 Energi och värme — hur mycket drar burken, och blir värmen ett problem?
 
 ### 4.11.1 Energibudget (utan Peltier)
@@ -825,6 +888,15 @@ med spår som bonus — vilket redan är en världspremiär för CanSat. Alla å
 - [Vanderbilt, "Demonstration Cloud Chamber" (LN₂ + etanol)](https://www.vanderbilt.edu/physicsdemonstration/davesdemos/demonstrations/demo106.htm)
 - [PCM Products, "PlusICE Eutectic Catalogue" (PCM:er -100…+89 °C)](https://www.pcmproducts.net/files/eutectic_catalogue-2011-1.pdf)
 - [Mousazade & Rafee 2020, "Cold panels with PCM in a refrigerated truck" (E-26/E-29/E-32)](https://www.sciencedirect.com/science/article/abs/pii/S0140700720303753)
+- [Rubitherm SP-21 datablad (285 kJ/kg, frys -25 °C)](https://www.rubitherm.eu/media/products/datasheets/Techdata_-SP-21_EN_03092026.PDF)
+- [Rubitherm SP-24 datablad (250 kJ/kg, frys -30 °C)](https://www.rubitherm.eu/media/products/datasheets/Techdata_-SP-24_EN_03092026.PDF)
+- [Rubitherm, "Remarks on supercooling, hysteresis..." (SP-seriens supercooling 0,5–3 K)](https://www.rubitherm.eu/media/products/datasheets/Remarks-on-supercooling-hysteresis-and-other-properties-of-the-SP-products.pdf)
+- [Rubitherm makroinkapsling (HDPE-ackumulatorer, min. 50 ml)](https://www.rubitherm.eu/en/productcategory/makroverkapselung-k%C3%BChlakkus)
+- [PlusICE Range 2021 (eutektiska E-serien: E-21 till E-74)](https://www.pcmproducts.net/files/PlusICE%20Range%202021-1.pdf)
+- [PCM Products, "Encapsulated PCM Products" (FlatICE/pouches)](https://www.pcmproducts.net/Encapsulated_PCMs.htm)
+- [savEnrg PCM-Products (PCM-HS23N -23 °C, 200 kJ/kg, frys ≤-28 °C)](http://www.rgees.com/documents/savENRG%20PCM-Products%20(T).pdf)
+- [Xu 2024, "Thermal Expansion Challenges for PCM Encapsulation" (volymexpansion, fyll 85–90 %)](https://onlinelibrary.wiley.com/doi/10.1002/adfm.202409884)
+- [Översikt: PCM-korrosion (aluminium korroderar; rostfritt mest kompatibelt)](https://www.sciencedirect.com/science/article/abs/pii/S2352152X23004024)
 - [Cowan 1949, "A Large Cloud Chamber Using Rear Illumination" (flugit i B-29 på 13,5 km)](https://www.pp.rhul.ac.uk/~cowan/EWC/RevSciInstrum_20_492.pdf)
 - [Adams (Caltech), "Cloud Chamber Studies in Cosmic Rays at an Altitude of 30,000 Feet"](https://doi.org/10.7907/dvvv-ts23)
 - [Bertelsmann & Heist 1997, "Thermal diffusion cloud chamber. II. Stability of operation"](https://pubs.aip.org/aip/jcp/article/106/2/624/479112/Two-dimensional-transport-and-wall-effects-in-the)
