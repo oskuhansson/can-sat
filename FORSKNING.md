@@ -139,7 +139,19 @@ Precis som [Arbor Scientific Cloud Chamber](https://www.arborsci.com/products/cl
 (-21 °C förfryst saltvatten fungerar i klassrum):
 
 - **0 W effekt under flygning** — uppfyller 2 h-regeln och 500 €-budgeten.
-- Massa: koppar/aluminiumplatta 50 mm Ø × 3 mm ≈ 50 g + PCM-påse ~50–80 g.
+- **Material: svart eloxerad aluminium** (inte koppar!) — platta 50 mm Ø × 3 mm väger
+  bara **~16 g** mot kopparns **~53 g** (densitet 2,70 vs 8,96 g/cm³). Besparing ~37 g
+  = över 10 % av CanSats massbudget. Kopparns bara ~2× bättre värmeledning (385–400
+  mot ~170–230 W/m·K) spelar ingen praktisk roll vid den lilla värmelasten (1,5–3 W):
+  temperaturfallet genom plattan blir <0,02 K för båda. Aluminium har dessutom ~2,3×
+  högre specifik värmekapacitet per kg (900 mot 385 J/kg·K). Svart eloxering ger
+  samtidigt den mörka bakgrund som behövs för spårkontrast (samma platta som
+  [CERN](https://scoollab.web.cern.ch/sites/default/files/documents/20200521_JW_DIYManual_CloudChamber_v7.pdf)
+  och [U. Mons](https://orbi.umons.ac.be/bitstream/20.500.12907/22502/1/Wilson_v1_red.pdf) använder).
+  **Varning:** NaCl-brinen ger gropfrätning på aluminium (och korroderar även koppar) —
+  brinen måste hållas **förseglad i en påse** (frys-/HDPE-påse, dubbelförseglad), aldrig
+  i direkt kontakt med plattan.
+- Massa: aluminiumplatta ~16 g + PCM-påse ~50–80 g.
 - Fryses kvällen innan och transporteras i isolerad låda (styrox/kylbox) till
   startplatsen. **Varning: NaCl-brinen fryser först vid -21,2 °C** — en vanlig
   hemfrys (-18 °C) räcker inte för eutektisk koncentration; använd en svagare
@@ -352,7 +364,7 @@ frysplatta); IPA om ni ändå får lov och kör Peltier på marken.
 │  etanol (eller IPA)        │
 │  genomskinlig kupol        │  ← kammare Ø ~50 mm, höjd ~40–50 mm, tätad
 │  (akryl/petriskål)         │
-│  mörk kopparplatta -21 °C  │  ← kylplatta + PCM (förfryst), isolerad undersida
+│  mörk eloxerad aluminiumplatta -21 °C │  ← kylplatta + PCM (förfryst), isolerad undersida
 ├────────────────────────────┤
 │  LED-sidobelysning +       │
 │  kamera (OV2640/OV5640)    │  ← ~15 g; SD-kort; video under flygning
@@ -372,7 +384,7 @@ frysplatta); IPA om ni ändå får lov och kör Peltier på marken.
 
 | Del | Massa |
 |---|---|
-| Kylplatta (koppar 50 mm Ø × 3 mm) + PCM (~50 ml saltvattenpåse) | ~100–130 g |
+| Kylplatta (eloxerad aluminium 50 mm Ø × 3 mm) + PCM (~50 ml saltvattenpåse) | ~70–100 g |
 | Kammare (akrylkupol, tätning, filt, LED) | ~40 g |
 | Kamera + SD | ~15 g |
 | MCU + radio + sensorer (T/P, lutning) | ~25 g |
