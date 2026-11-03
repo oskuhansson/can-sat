@@ -548,6 +548,25 @@ nedfärden** — man kan till och med sänka effekten eller använda mindre ante
 - **868 MHz-yagi är en meterklass** (element ~30–80 cm) — inget problem på marken, men
   planera stativ.
 
+### 12.11 Val av mark-RX-antenn (enkel jämförelsetabell)
+
+| Typ | Gain | Strålvinkel (HPBW) | Storlek (868 MHz) | Storlek (2,4 GHz) | Kostnad | Lämplig för CanSat-RX |
+|---|---|---|---|---|---|---|
+| Isotrop/tråd (referens) | 0 dBi | 360° | — | — | — | Bara referens |
+| **Omni-stav (monopol)** | 0–3 dBi | 360° (allt håll) | ~8 cm | ~3 cm | <10 € | Nej — ingen riktad förstärkning |
+| Dipol | 2,1 dBi | ~360° × 40° | ~17 cm | ~6 cm | 5–15 € | Nej — halvkraftig omni |
+| **Kollinär 3–5 dBi** | 3–5 dBi | ~15–30° (elev) | ~20–50 cm | ~10–20 cm | 10–30 € | Bara om man helt vill slippa gimbal |
+| **Yagi** ⭐ | 8–15 dBi | ~30–65° × 30–60° | ~40–90 cm | ~10–25 cm | 15–50 € | **Bäst — hög gain + hanterbar stråle** |
+| Patch-panel | 6–12 dBi | ~40–80° × 30–50° | ~25–40 cm | ~10–20 cm | 20–60 € | Bra om yagin för lång/omvänt |
+| Disco/Dish | 20–33 dBi | ~5–15° | ~60–120 cm | ~30–60 cm | 50–200 € | Överkill — för smal stråle |
+
+**Rekommendation för mark-RX + gimbal (§12.10):**
+- **Primärt: Yagi 12–15 dBi på 868 MHz** (eller ~10–20 dBi på 2,4 GHz) — bra förstärkning
+  med en stråle som är lätt att rikta mot burken (±2–5° pekfel räcker, §12.10.3).
+- **Alternativ:** patch-panel 8–12 dBi om man vill ha lägre profil.
+- **Undvik dish >20 dBi** — strålen är för smal (5–15°) för att följa en fallande burk
+  utan mycket mjuk pekning.
+
 ## 13. Källförteckning (tillägg för relä-versionen)
 
 - [AMSAT, "Two-way satellites: AO-91 Fox-1B" (cross-band FM-repeater)](https://www.amsat.org/two-way-satellites/ao-91/)
