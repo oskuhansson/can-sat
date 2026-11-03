@@ -408,8 +408,8 @@ määräyksen). Alltså är **både upplänk och nedlänk lagliga**, även från
     alltså bara ~0,85 dBd.
   - **EIRP:** sändareffekt + antenn (dBi) − kabel = "strålad effekt som om antennen vore
     isotrop". En 16 dBm-sändare med 3 dBi-antenn → 19 dBm EIRP.
-  - **ERP:** samma men mot dipol (dBd): **ERP = EIRP − 2,15 dB**. Därför är 25 mW ERPA
-    = ~40 mW EIRPA; och 25 mW e.r.p. ≈ **14 dBm ERP ≈ 16 dBm EIRP**.
+  - **ERP:** samma men mot dipol (dBd): **ERP = EIRP − 2,15 dB**. Därför är 25 mW ERP
+    = ~40 mW EIRP; och 25 mW e.r.p. ≈ **14 dBm ERP ≈ 16 dBm EIRP**.
 - **"Antennen för att förstärka" — vad gain faktiskt gör:** en passiv antenn *förstärker
   inte* — den **riktar om** energi. En yagi/dish koncentrerar utstrålningen i en smal
   stråle i stället för att strunta åt alla håll.
@@ -455,6 +455,98 @@ marken tar emot med höga antenner — det är fullt tillåtet och robust:
 upplänk (868/2,4 GHz — laglig, se ovan). Vill ni istället ha *enkel och vattentät nedlänk*
 (markantenner förstärker mottagningen) — kör beacon-lösningen. Båda är lagliga; valet
 bestäms av vilken fråga som ska demonstreras.
+
+### 12.10 Fokuserad design: monopol i burken + high-gain-antenn på marken med gimbal 🎯
+
+*Det här är den variant som fokuseras i analysen: **burken har en enkel monopolantenn**
+(omni), och **marken har en high-gain-antenn (t.ex. 12–23 dBi-yagi/patch) som sitter
+på en gimbal** som följer burken under nedfärden. Allt svårt och tungt ligger på marken;
+burken förblir minimal och robust.*
+
+#### 12.10.1 Varför denna arkitektur är rätt val
+
+- **Burken = enkel monopol (omni).** En monopolantenn är en rak tråd/pinne (~λ/4
+  vertikalt ovanför en motviktsplatta) som strålar åt alla sidor — **ingen riktning,
+  ingen pekning, inget gimbal i burken**. Den är billig (<5 €), tålig och klarar
+  20–30 G + rotation under fallskärm utan att tappa kontakten (en riktad antenn skulle
+  förlora signalen vid burkens rotation).
+- **High-gain på marken.** En 12–23 dBi-yagi/patch på marken har **ingen storleks-,
+  vikt- eller effektbegränsning** och ingen lagbunden RX-gräns (RX-gain är fri, §12.8).
+  Med 23 dBi får man ~100× mottagarkänslighet jämfört med en enkel stav — det är
+  *marken* som gör den tunga lyftkraften.
+- **Gimbal på marken.** Där burkgimbalen (pan-tilt i 66 mm-burk + servon som ska klara
+  20 G + rotation) var det svåraste i §5, är **markgimbalen trivial**: den står på ett
+  stativ, drivs av vanliga hobby-servon/steppers och får väga hur mycket som helst. Den
+  behöver bara rotera två axlar (azimut + elevation) för att följa burken.
+
+#### 12.10.2 System och link budget
+
+```
+ Burken: Tx-monopol (omni)  ──►  Mark: high-gain-antenn + gimbal-tracker ──►  PC/logg
+ 868 MHz (eller 2,4 GHz)         12–23 dBi yagi på gimbal                  RSSI + telemetri
+ 25 mW / 20 dBm EIRP              GPS/RSSI-baserad följning
+```
+
+**Nedlänk-budget med burkens monopol (0–2 dBi) som sändare:**
+
+| Steg | 868 MHz | 2,4 GHz |
+|---|---|---|
+| EIRP (max laglig) | 14 dBm (25 mW e.r.p.) | 20 dBm (100 mW EIRP) |
+| Monopol-gain (ingår i EIRP) | ~0–2 dBi | ~0–2 dBi |
+| FSPL vid ~1,5 km slantavstånd | ~85 dB | ~103 dB |
+| Markantenn 23 dBi | +23 dBi | +23 dBi |
+| **Mottaget på marken** | **~−62 dBm** | **~−60 dBm** |
+| Känslighet (LoRa/WiFi) | −120…−137 dBm | −85…−90 dBm |
+| **Marginal** | **~60–75 dB** | **~25–30 dB** |
+
+(Kalkylformler: §2 och [rftools](https://rftools.io/calculators/rf/rf-link-budget/).)
+
+→ Med monopolburk + 23 dBi-markantenn på 868 MHz finns **60–75 dB marginal över hela
+nedfärden** — man kan till och med sänka effekten eller använda mindre antenn. På
+2,4 GHz är marginalen ~25–30 dB, fortfarande robust. **Rekommendation: 868 MHz (LoRa)**
+— störst marginal och enklast laglig effekt (25 mW e.r.p., §12.7).
+
+#### 12.10.3 Gimbalkrav och pekprecision
+
+- **Två axlar (azimut + elevation):** burken faller från ~1 km till marken. Elevationen
+  går från ~90° (apogeum rakt ovanför) ned mot några grader vid landning; azimuten beror
+  på var markstationen står. En vanlig hobby 2-axlig pan-tilt räcker för en lätt yagi;
+  en 12–23 dBi-yagi väger 0,3–1 kg → använd en tyngre metalstation
+  ([OES PT60-klass](https://www.oesincorp.com/motorized-multi-axis-stages/motorized-pan-tilt-mounts.htm))
+  eller en egenbyggd stepper-hållare.
+- **Krävd pekprecision ≈ halva strålvinkeln:** en 23 dBi-yagi på 868 MHz har en stråle
+  på ~10–15° (HPBW), en 12 dBi ~50°×40°. Med 12–23 dBi räcker ett pekfel på ±2–5°.
+- **Styrdata:** följ burken via **telemetrin burken redan sänder** — RSSI-styrkan ger
+  ett "peak"-spår för gimbalen; alternativt position/IMU från GPS i telemetrin och en
+  beräknad vinkel. Bäst: kombination (GPS-prognos + RSSI-peak) för robust följning även
+  vid fallskärmssvängning.
+- **Uppdateringstakt:** burken faller 8–11 m/s; vinkeländringen är snabbast nära marken.
+  1–5 Hz uppdatering räcker gott; markgimbalen behöver bara några grader/s.
+
+#### 12.10.4 Fördelar och vad man får ut
+
+1. **Robusthet först:** monopol i burken = inget som kan peka fel, klara 20–30 G och
+   rotation; all komplexitet ligger i markens gimbal som är enkel att bygga/testa hemma.
+2. **Laglighet enkel:** nedlänk-only (beacon) med fri RX-gain på marken (§12.7); ingen
+   upplänk krävs (men den är laglig om ni vill testa senare).
+3. **Plats för sensorer i burken:** monopolen tar minimal plats (en tråd/pinne) → gott
+   om plats för elektronik/sensorer (§7).
+4. **Mätbar vetenskap:** logga RSSI över tid från gimbalens mottagare + GPS-position i
+   telemetrin → beräkna fri-rums-förlust, verifiera antennförstärkningen, visa när
+   mottagningen var bäst — ett riktigt "downlink-tracking"-uppdrag.
+5. **Showcase:** en markbaserad antenn-tracker som följer en fallande CanSat är i sig en
+   imponerande teknikdemonstration (jfr. riktiga markstationer för satelliter).
+
+#### 12.10.5 Nackdelar / att vara ärlig om
+
+- **Inte ett "relä mellan två punkter"** — det är en enkelriktad mottagning i en marken
+  (eller flera mottagarstationer utan reläfunktion).
+- **Flera markstationers värde sjunker:** en gimbal pekar på burken åt gången; "två
+  stationer pratar genom satelliten" faller bort (kräver upplänk, §12.6/§12.7).
+- **Fallskärmssvängning:** burken gungar/roterar, men eftersom monopolen är omni spelar
+  det ingen roll för sändningen — enda följden är att RSSI varierar lite.
+- **868 MHz-yagi är en meterklass** (element ~30–80 cm) — inget problem på marken, men
+  planera stativ.
 
 ## 13. Källförteckning (tillägg för relä-versionen)
 
