@@ -1,18 +1,48 @@
-# WiFi-hotspot i CanSat — forskningsöversikt
+# Kommunikation: monopol-antenn i burken + markgimbal — forskningsöversikt
 
-*Skapad 2026-11-02. Syfte: undersöka om det är genomförbart att göra CanSaten till en
-"WiFi-hotspot från himlen" (Starlink-liknande) — en high-gain-antenn på burken som ger
-telefoner på marken trådlös uppkoppling under nedfärden, med plats kvar för annan
-elektronik och sensorer. Dokumentet ersätter cloud-chamber-spåret som primärt uppdrag.*
+*Uppdaterad 2026-11-03. **Aktuellt fokus:** CanSaten sänder en **nedlänk-beacon** med en
+**enkel monopol-antenn** inuti burken, medan marken använder en **hög-gain-antenn på en
+gimbal** som följer burken (GPS + RSSI). Hela lösningens tyngd ligger på marken; burken
+är minimal och robust med plats för sensorer. Det här dokumentet började som en
+WiFi-hotspot/relä-undersökning — de delarna är nu arkiverade (se nedan), men den
+användbara bakgrunden (fysik, regler, antennval) är fortfarande aktuell.*
 
 ---
 
-## 1. Uppdraget och målbilden
+## A. Aktuell design (sammanfattning)
 
-**Målet:** CanSaten bär en accesspunkt (WiFi-hotspot) som telefoner på marken kan
-ansluta till när den faller, "lite som Starlink". Lagets fokus: en robust antenn med
-tillräckligt hög gain som ryms i/får plats på burken, eventuellt styrbar, plus gott om
-plats för övrig elektronik/sensorer.
+```
+ Burken: Tx-monopol (omni) ──►  Mark: high-gain-antenn + gimbal-tracker ──►  PC/logg
+ 868 MHz LoRa (25 mW e.r.p.)      12–23 dBi-yagi (eller medeldish)          RSSI + telemetri
+                                  GPS + RSSI-baserad följning
+```
+
+- **Exakt vad som gäller nu:** se **§12.10** (fokuserad design), **§12.11** (mark-RX-antennval)
+  och **§12.11.1** (dish + GPS). Allt annat nedan är bakgrund/arkivering.
+- **Länkbudgeten är robust:** 868 MHz LoRa ger 60–75 dB marginal över nedfärden
+  (§12.10.2); 2,4 GHz ~25–30 dB.
+- **Regler:** nedlänk (och upplänk) är licenfria i Finland om utrustningen är CE-godkänd
+  och håller sig inom effekt-/sändningstidsgränserna (§12.7). RX-gain på marken är
+  oreglerad.
+- **Begrepp:** upplänk/nedlänk, dBm, EIRP vs ERP, antennförstärkning — förklaras i §12.8.
+
+**Status-lathund för filen:**
+
+| Sektion | Innehåll | Status |
+|---|---|---|
+| §12.10–12.11 | **Monopol + markgimbal (aktuell design)** | Aktuell ⭐ |
+| §12.6–12.9 | Relä, upplänk, begrepp, nedlänk-beacon | Bakgrund (användbar) |
+| §2–§11 | WiFi-hotspot-fysik, regler, massbudget | Bakgrund (användbar) |
+| §1, §12 (12.1–12.5) | WiFi-hotspot- och bent-pipe-koncepten | **Arkiverat** |
+
+---
+
+## 1. Uppdraget och målbilden (ursprunglig WiFi-hotspotidé — arkiverad)
+
+**Målet (ursprunglig idé):** CanSaten bär en accesspunkt (WiFi-hotspot) som telefoner på
+marken kan ansluta till när den faller, "lite som Starlink". Lagets fokus: en robust
+antenn med tillräckligt hög gain som ryms i/får plats på burken, eventuellt styrbar,
+plus gott om plats för övrig elektronik/sensorer.
 
 **Viktig ärlighet direkt:** en CanSat har *ingen internetupling*. Phones som ansluter
 till hotspoten får alltså inte "riktig" internet — de når CanSatens **egen webbserver**
