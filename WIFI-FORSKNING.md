@@ -358,6 +358,104 @@ Reläet "lönar sig" när:
   (store-forward + alla nedfärdsminuter), inga telefoner att jaga, markantenner = godtycklig
   förstärkning, och den adresserar exakt målgruppens kärnfråga ("varför behövs en satellit?").
 
+### 12.7 Är upplänk olaglig i Finland? — nej, det är en vanlig missuppfattning ✅
+
+**Kort svar: upplänk är fullt tillåten i Finland** på de licensfria banden — både från
+marken (upplänk) och från burken (nedlänk). Reglerna begränsar **effekten och
+sändningstiden**, inte att man "får sända".
+
+Vad som kan ha fört dig vilse: *vissa* radiosammanhang kräver tillstånd:
+- **Amatörradio** (OH-anropssignaler, repeater) kräver ett **amatörradio-tillstånd**
+  ([Traficom: radioamatööritoiminta](https://traficom.fi/fi/radioluvat-ja-taajuudet/radiotaajuuksien-kaytto/radioamatooritoiminnan-patevyydet-ja-taajuudet))
+  — men **det är inte det som behövs här**.
+- **Licensfria "kollektiva frekvenser"** ("yhteistaajuudet"/"luvasta vapaat") kräver
+  **inget tillstånd** — bara att utrustningen är CE-godkänd och håller sig inom effekt-
+  och sändningstidsgränserna. Traficoms määräys ([Regulation 15 AR/15AV](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf),
+  aktuell version från 31.3.2025/2026) definierar exakt detta.
+
+**Vad som är tillåtet för vår burk (licensfritt, inget tillstånd):**
+
+| Band | Max strålad effekt | Sändningstid (duty cycle) | Källa |
+|---|---|---|---|
+| 868 MHz SRD, 868,0–868,6 MHz (LoRa-standard) | **25 mW e.r.p.** (≈14 dBm) | **≤1 %** (≈36 s/h) | [Finlex määräys §10.1](https://www.finlex.fi/api/media/authority-regulation/535594/mainPdf/main.pdf?timestamp=2025-03-26T22%3A00%3A00.000Z&typeDiscriminator=traficom-communications), [The Things Network](https://www.thethingsnetwork.org/docs/lorawan/regional-limitations-of-rf-use/) |
+| 868 MHz SRD, 869,4–869,65 MHz (sub-band P) | **500 mW e.r.p.** | ≤10 % | [CEPT EFIS](https://efis.cept.org/adhoc_grabber.jsp?annex=4) |
+| **2,4 GHz WLAN/WAS-RLAN** | **100 mW EIRP (20 dBm)** | ingen (driftcykel) krav | [Traficom §9.1](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf) |
+
+Viktigt: **användning i luften är explicit tillåten** för både SRD (868 MHz) och WLAN
+(2,4 GHz) — "Käyttö on sallittu myös ilmassa olevassa ilma-aluksessa" (§10.1 och §9.1 i
+määräyksen). Alltså är **både upplänk och nedlänk lagliga**, även från en flygande burk.
+
+> ⚠️ Obs: effektgränserna är för **varje sändare** (hela systemet = sändare + antenn +
+> kabel). En **förstärkare får inte kopplas** mellan sändare och antenn om inte hela
+> sammansättningen är CE-godkänd tillsammans ([määräys §4](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf)).
+> Använd därför **CE-märkta moduler med inbyggd/medföljande antenn** och beräkna att
+> helheten håller sig under taket (ingen extern "booster").
+
+### 12.8 Begrepp förklarade (radioteknik för nybörjare) 📖
+
+- **Upplänk / nedlänk** — två riktningar i en radiokommunikation:
+  - **Upplänk (uplink):** sändning *från marken till burken* (t.ex. mark A sänder "HELLO").
+  - **Nedlänk (downlink):** sändning *från burken till marken* (t.ex. burken återsänder
+    "HELLO via CanSat" till mark B).
+  Tänk: "upplänk = kunden pratar, nedlänk = satelliten svarar".
+- **dB, dBm, dBi, dBd, ERP, EIRP** (enheter för effekt/förstärkning):
+  - **dB (decibel):** logaritmiskt mått på förhållande — 10 dB = 10×, 20 dB = 100×.
+  - **dBm:** effekt i dB **relativt 1 mW**. +10 dBm = 10 mW, +20 dBm = 100 mW,
+    +30 dBm = 1 W.
+  - **dBi / dBd:** **antennförstärkning** mot två referensantenner. **dBi** mot en
+    isotrop antenn (används på 2,4 GHz i EIRP-regeln); **dBd** mot en halvvågsdipol
+    (används på 868 MHz i e.r.p.-regeln). **dBd = dBi − 2,15** — en "3 dBi-antenn" är
+    alltså bara ~0,85 dBd.
+  - **EIRP:** sändareffekt + antenn (dBi) − kabel = "strålad effekt som om antennen vore
+    isotrop". En 16 dBm-sändare med 3 dBi-antenn → 19 dBm EIRP.
+  - **ERP:** samma men mot dipol (dBd): **ERP = EIRP − 2,15 dB**. Därför är 25 mW ERPA
+    = ~40 mW EIRPA; och 25 mW e.r.p. ≈ **14 dBm ERP ≈ 16 dBm EIRP**.
+- **"Antennen för att förstärka" — vad gain faktiskt gör:** en passiv antenn *förstärker
+  inte* — den **riktar om** energi. En yagi/dish koncentrerar utstrålningen i en smal
+  stråle i stället för att strunta åt alla håll.
+  - **TX-riktning (upplänk):** antennens gain läggs TILL i EIRP/ERP-taket → med hög
+    gain-antenn måste man **sänka sändareffekten** för att hålla sig under taket.
+    Vinsten: energin koncentreras dit den ska (bättre räckvidd åt rätt håll).
+  - **RX-riktning (nedlänk):** **ingen laggräns alls** — mottagarantennens gain höjer
+    bara mottagningskänsligheten ("syn" för svaga signaler) och kostar inget i
+    effektlagstiftningen. Det är därför **markantenna på nedlänken görs så stor som
+    möjligt (12–23 dBi)** medan burken kan nöja sig med en liten antenn.
+  - **Slutsats:** "använd antennen för att förstärka" passar perfekt för **nedlänken** —
+    du kan inte öka utsändningseffekten med en markantenn, men du kan höja
+    mottagningskänsligheten nästan hur mycket som helst.
+- **Radiated power / säteilyteho:** per Traficom = sändareffekt + antennförstärkning
+  − kabel-/konnektorförlust ([määräys §6](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf)).
+- **Duty cycle (toimintasuhde):** andel av tiden en sändare får vara igång under en
+  timme ([määräys §6](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf),
+  [The Things Network](https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/)).
+  ≤1 % = max 36 s sändning/timme; ett LoRa-paket är 50–200 ms, så med ~1 s intervall och
+  få paket klarar man det lätt. Viktigt att programvara räknar ihop lufttiden.
+- **Länkbudget / link budget och känslighet:** mottagen effekt = EIRP(sändare) − FSPL
+  + mottagarantenn. **Känslighet** = lägsta signalstyrka en mottagare kan tolka (ju
+  lägre siffra, desto bättre): LoRa ≈ −120…−137 dBm, WiFi ≈ −85…−90 dBm. [S. Hum, Satellite
+  Links](https://www.waves.utoronto.ca/prof/svhum/ece422/notes/23-satellite.pdf): uplink
+  och downlink räknas alltid separat.
+
+### 12.9 Nedlänk-only ("beacon") — den enklaste, helt lagliga varianten
+
+Om du *vill* slippa upplänk och bara låta **burken sända** (beacon/telemetri) medan
+marken tar emot med höga antenner — det är fullt tillåtet och robust:
+
+- Burken sänder på 868 MHz (eller 2,4 GHz) med CE-modul, t.ex. LoRa-paket med
+  temperatur/tryck/IMU + ID var ~1 s (inom duty cycle med korta paket).
+- Två markstationer har **12–23 dBi-yagis** för att ta emot nedlänken extremt bra
+  (RX-gain är fri — ingen laggräns).
+- Mät och jämför: RSSI (signalstyrka) i båda ändarna, effekten av antenn/förstärkning,
+  hur mottagningen varierar under nedfärden. Det blir en **mätbar "downlink-vetenskap"**
+  (jämför omni vs yagi, avstånd vs signalstyrka).
+- Vad man tappar mot relä-versionen: **ingen tvåpunkts-reläfunktion** — bägge stationerna
+  lyssnar på samma utsändning i stället för att prata genom burken.
+
+**Beslutsregel:** vill ni *beviset "satelliten reläerar mellan två stationer"* krävs
+upplänk (868/2,4 GHz — laglig, se ovan). Vill ni istället ha *enkel och vattentät nedlänk*
+(markantenner förstärker mottagningen) — kör beacon-lösningen. Båda är lagliga; valet
+bestäms av vilken fråga som ska demonstreras.
+
 ## 13. Källförteckning (tillägg för relä-versionen)
 
 - [AMSAT, "Two-way satellites: AO-91 Fox-1B" (cross-band FM-repeater)](https://www.amsat.org/two-way-satellites/ao-91/)
@@ -367,4 +465,9 @@ Reläet "lönar sig" när:
 - [CEPT EFIS, "Annex 1: Non-specific Short Range Devices" (868 MHz h1.x, e.r.p.-nivåer)](https://efis.cept.org/adhoc_grabber.jsp?annex=4)
 - [DOMCA, "Regulations & Duty Cycle" (868 MHz e.r.p., duty cycle, dBd vs dBi)](https://docs.domca.nl/en/usage/regulations/)
 - [CalPoly, "Store-and-forward routing and data mules for CubeSats"](http://users.csc.calpoly.edu/~bellardo/pubs/wc10.pdf)
+- [Traficom, Regulation 15 AR/15AV (licensfria kollektiva frekvenser, suljettu dokument PDF)](https://www.traficom.fi/files/media/regulation/Regulation%2015AV2025M.pdf)
+- [Finlex, Traficom määräys (4 AF/2025M), licencfria kollektiva frekvenser (PDF)](https://www.finlex.fi/api/media/authority-regulation/535594/mainPdf/main.pdf?timestamp=2025-03-26T22%3A00%3A00.000Z&typeDiscriminator=traficom-communications)
+- [The Things Network, "Regional limitations of RF use in LoRaWAN" (868 MHz, duty cycle, 16 dBm EIRP)](https://www.thethingsnetwork.org/docs/lorawan/regional-limitations-of-rf-use/)
+- [The Things Network, "Duty cycle" (sändningstid per timme)](https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/)
+- [Traficom, "Radioamatööritoiminnan pätevyydet ja taajuudet" (amatörradio kräver tillstånd — ej samma sak)](https://traficom.fi/fi/radioluvat-ja-taajuudet/radiotaajuuksien-kaytto/radioamatooritoiminnan-patevyydet-ja-taajuudet)
 - [MathWorks, "DVB-S2 bent pipe simulation" (relä-länk, koncept)](https://www.mathworks.com/help/satcom/ug/dvbs2-bent-pipe-simulation-with-rf-impairments-and-corrections.html)
