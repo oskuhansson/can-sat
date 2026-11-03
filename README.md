@@ -7,6 +7,7 @@ på marken; burken förblir minimal och robust med gott om plats för sensorer.
 ## Dokumentation
 
 - **WIFI-FORSKNING.md** — huvudöversikt: [monopol-antenn i burken + high-gain-gimbal på marken (link budget, antennval, regler, begrepp — §12.10–12.11)](WIFI-FORSKNING.md)
+- **RADIOTEKNIK.md** — [radioteknik-snabbkurs (SNR, Eb/N₀, modulering, LoRa vs WiFi, ESP-NOW)](RADIOTEKNIK.md)
 - **FORSKNING.md** — äldre cloud chamber-forskning arkiverad (ej i fokus längre)
 
 ## Status
