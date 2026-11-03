@@ -564,8 +564,49 @@ nedfärden** — man kan till och med sänka effekten eller använda mindre ante
 - **Primärt: Yagi 12–15 dBi på 868 MHz** (eller ~10–20 dBi på 2,4 GHz) — bra förstärkning
   med en stråle som är lätt att rikta mot burken (±2–5° pekfel räcker, §12.10.3).
 - **Alternativ:** patch-panel 8–12 dBi om man vill ha lägre profil.
-- **Undvik dish >20 dBi** — strålen är för smal (5–15°) för att följa en fallande burk
-  utan mycket mjuk pekning.
+- **Undvik dish >20 dBi i defaultspåret** — strålen är för smal (5–15°) för att följa en
+  fallande burk utan mycket mjuk pekning. Se dock §12.11.1 för dish + GPS-fallet.
+
+### 12.11.1 Vad händer med dishen om man har GPS-spårning + LoRa-backup? 🛰️
+
+**Kort svar: Ja, dishen blir då ett reellt och kraftfullt alternativ — GPS:en tar bort
+dess största svaghet (pekning), men strålen förblir smal, så den kräver en *mjuk* gimbal
+som följer positionen via GPS + RSSI-peak. Det är en gain-kompromiss, inte en
+catch-all.**
+
+Tanken: ett **sepatat backup-system (omni-antenn + LoRa)** skickar burkens GPS-koordinater
+till marken. Då vet markgimbalen *ungefär* var burken är och kan räkna elev/azimut innan
+den riktar dishen. Detta **löser inte** allt, men det förändrar ekvationen:
+
+**Fördelar med dish + GPS:**
+- Väsentligt högre gain (24–33 dBi jämfört med yagins 12–15) → **mer link-marginal,**
+  ibland 20+ dB bonus som kan användas för högre datahastighet eller längre räckvidd.
+- GPS + RSSI-peak ger en mjuk spårloop som *kan* hålla en medelstor dish på målet.
+
+**Men tre nyckelrisker kvarstår:**
+
+1. **Beamwidth vs fallskärmssvängning:** en 24–33 dBi-dish har bara ~5–10° stråle. Burkens
+   gungning under fallskärmen kan deformera var burken "egentligen är" sett från marken
+   mer än halva strålvinkeln. → Velj ett mjukt pekfel: medeldish ~24 dBi (8–10°) är
+   klart tryggare än 30–33 dBi (5°).
+2. **GPS-fel + uppdateringstakt:** GPS-positionen har några meters fel och kommer ~1 Hz.
+   Under sista ~100 m (snabb vinkelförändring ~1–2°/s) krävs extrapolering; om GPS-hopp
+   eller fördröjning blir stor tappar dishen signalen. → Den behöver en **prediktiv
+   spårloop** (senaste banan + RSSI-peak som korrektur).
+3. **Footprint vid avstånd:** en 9°-dish täcker ~150 m diameter vid 1 km, men bara ~16 m
+   vid 100 m höjd — nära marken är luckan snäv.
+
+**Slutsats:** dish + GPS är genomförbart och ger mer marginal, men **det villkorliga
+pekmjukheten gör yagin fortfarande till det förstaval för 2027** — åtminstone initialt.
+Bästa kompromissen om ni vill ha både: **medeldish ~24 dBi (2,4 GHz, ~1 m) + mjuk
+GPS/RSSI-spårloop** i stället för en stor 33 dBi-dish. Kör först marktest med yagi, och
+bygg sedan på dish-spårning som en "fri applikation".
+
+**Konkret konkret arkitektur:**
+```
+ LoRa-backup (omni) ──► PC ──► gimbal-styrning (elev/azimut från GPS) ──► dish -> höghastighetsdata
+ ↑ GPS-koordinater                                                eller yagi (default)
+```
 
 ## 13. Källförteckning (tillägg för relä-versionen)
 
