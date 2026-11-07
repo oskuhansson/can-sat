@@ -144,6 +144,25 @@ def main() -> int:
         close(airtime, 0.1853, 0.005),
         f"fick {airtime * 1000:.1f} ms",
     )
+    # Regression: header-termen var inverterad (IH = 1 betyder *implicit* header,
+    # sa explicit header ska inte dra av 20). Felet syntes bara dar ceil()
+    # passerade en grans — SF9 var oberord, SF7 och SF8 var 10 % for korta.
+    # Referensvarden fran EpiSensors AN1200.13-kalkylator, 20 byte, CRC pa.
+    for sf, ref_ms in ((7, 56.58), (8, 102.9), (12, 1318.9)):
+        got = modulation.airtime_s(sf, 125.0, 20)
+        check(
+            f"Lufttid SF{sf}/125 kHz, 20 byte = {ref_ms:.1f} ms",
+            close(got * 1000.0, ref_ms, 0.5),
+            f"fick {got * 1000:.1f} ms",
+        )
+    check(
+        "Lufttid ar monoton i SF",
+        all(
+            modulation.airtime_s(sf, 125.0, 20) < modulation.airtime_s(sf + 1, 125.0, 20)
+            for sf in (7, 8, 9, 10, 11)
+        ),
+        "okar inte med SF",
+    )
     airtime_24 = modulation.airtime_s(9, 812.0, 20)
     check(
         "2,4 GHz är minst 5x snabbare på samma payload",

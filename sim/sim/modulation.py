@@ -117,12 +117,18 @@ def airtime_s(
     # LDRO slås på automatiskt när symboltiden överstiger 16 ms.
     de = 1 if tsym > 0.016 else 0
 
+    # Formeln ar 8PL - 4SF + 28 + 16CRC - 20*IH, och IH = 1 betyder *implicit*
+    # header. Explicit header (det normala) ska alltsa inte dra av nagot. Koden
+    # gjorde motsatsen, vilket underskattade lufttiden sa fort ceil() passerade
+    # en grans: SF7/125 kHz/20 byte gav 51,5 ms i stallet for 56,6 ms (kontroll:
+    # EpiSensors kalkylator anger 56,58 ms). En underskattad lufttid ar den
+    # farliga riktningen for en duty-cycle-budget — man kan da overskrida 1 %.
     numerator = (
         8 * payload_bytes
         - 4 * sf
         + 28
         + (16 if crc else 0)
-        - (20 if explicit_header else 0)
+        - (0 if explicit_header else 20)
     )
     denominator = 4 * (sf - 2 * de)
     # Faktorn är (CR+4), dar CR = 1..4 for 4/5..4/8 — alltsa 5 for 4/5. Det ar
