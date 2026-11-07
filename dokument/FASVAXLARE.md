@@ -50,10 +50,10 @@ Alla standardkretsar hos Digi-Key/Mouser börjar på **1,1–1,2 GHz**. 868 MHz 
 
 Bara **Daico** har färdiga kretsar i 500–1000 MHz:
 
-| Komponent | Frekvens | Bit | Steg / max | IL | Effekt | Kapsel |
-|---|---|---|---|---|---|---|
-| [DPS42028](https://daico.com/control-components/phase-shifter-bi-phase-modulator/) | **500–1000 MHz** | 4 | 11,25° / **max 168,75°** | 2,1 dB | 13 dBm | DIP-38 |
-| [DPS89082](https://daico.com/control-components/phase-shifter-bi-phase-modulator/) | **500–1000 MHz** | 8 | 1,4° / 358,6° | 4,4 dB | 13 dBm | SMA |
+| Komponent                                                                          | Frekvens         | Bit | Steg / max               | IL     | Effekt | Kapsel |
+| ---------------------------------------------------------------------------------- | ---------------- | --- | ------------------------ | ------ | ------ | ------ |
+| [DPS42028](https://daico.com/control-components/phase-shifter-bi-phase-modulator/) | **500–1000 MHz** | 4   | 11,25° / **max 168,75°** | 2,1 dB | 13 dBm | DIP-38 |
+| [DPS89082](https://daico.com/control-components/phase-shifter-bi-phase-modulator/) | **500–1000 MHz** | 8   | 1,4° / 358,6°            | 4,4 dB | 13 dBm | SMA    |
 
 **Styrka:** fungerar direkt på 868 MHz, internmatchad 50 Ω.
 **Svaghet:** Daico är militär/industri-försäljning — **inte på Mouser**, kräver offert.
@@ -239,13 +239,13 @@ kretsar i rimlig prisklass.*
 
 ### 1. Färdiga fasväxlare som täcker 2,4 GHz
 
-| Komponent | Frekvens | Bit | Steg | IL | RMS-fasfel | Styrning | Kapsel | Pris (1 st) |
-|---|---|---|---|---|---|---|---|---|
-| ⭐ **MACOM MAPS-010144** | **2,3–3,8 GHz** | 4 | 22,5° | **2,5 dB** | 2,2° | seriell/parallell | 4 mm PQFN-24 | **$35,25** |
-| **MACOM MAPS-011019** | **2,4–5,1 GHz** | 6 | 5,625° | 4,5 dB | 4,0° | seriell/parallell | 4 mm PQFN-24 | ej verifierat |
-| **Qorvo TGP2108-SM** | **2,5–4 GHz** ⚠️ | 6 | 5,625° | 5 dB | <2° | 0/+3…+5 V | 5×5 mm QFN | ej verifierat |
-| **ADI HMC928LP5E** (analog) | **2–4 GHz** | analog | kontinuerlig 450° | 3,5–4 dB | ±5° | 0–13 V analog | 32-QFN 5×5 | **$71,88** |
-| pSemi PE44820 | 1,7–2,2 (utökad 1,1–3,0) | 8 | 1,4° | 6 dB | 1,0° | seriell/parallell | 32-L QFN 5×5 | ej verifierat |
+| Komponent                   | Frekvens                 | Bit    | Steg              | IL         | RMS-fasfel | Styrning          | Kapsel       | Pris (1 st)   |
+| --------------------------- | ------------------------ | ------ | ----------------- | ---------- | ---------- | ----------------- | ------------ | ------------- |
+| ⭐ **MACOM MAPS-010144**     | **2,3–3,8 GHz**          | 4      | 22,5°             | **2,5 dB** | 2,2°       | seriell/parallell | 4 mm PQFN-24 | **$35,25**    |
+| **MACOM MAPS-011019**       | **2,4–5,1 GHz**          | 6      | 5,625°            | 4,5 dB     | 4,0°       | seriell/parallell | 4 mm PQFN-24 | ej verifierat |
+| **Qorvo TGP2108-SM**        | **2,5–4 GHz** ⚠️         | 6      | 5,625°            | 5 dB       | <2°        | 0/+3…+5 V         | 5×5 mm QFN   | ej verifierat |
+| **ADI HMC928LP5E** (analog) | **2–4 GHz**              | analog | kontinuerlig 450° | 3,5–4 dB   | ±5°        | 0–13 V analog     | 32-QFN 5×5   | **$71,88**    |
+| pSemi PE44820               | 1,7–2,2 (utökad 1,1–3,0) | 8      | 1,4°              | 6 dB       | 1,0°       | seriell/parallell | 32-L QFN 5×5 | ej verifierat |
 
 #### 1.1 Prisexempel (verifierade)
 
