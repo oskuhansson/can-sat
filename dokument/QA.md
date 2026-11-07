@@ -298,3 +298,5 @@ gjort/planerar för att stödja påståendet. Det inger förtroende hos bedömar
 - [CANSAT-GRUND.md](CANSAT-GRUND.md), [KOMMUNIKATION.md](KOMMUNIKATION.md),
   [PROTOKOLL.md](PROTOKOLL.md) — källorna frågorna bygger på
 - [KOSTNADER.md](KOSTNADER.md) — budgeten som kritiken ofta gäller
+- [REGELVERK.md](REGELVERK.md) — effektgränser och duty cycle som Del B kontrollerar
+- [POLARISATION.md](POLARISATION.md) — antennafysiken bakom kritikfrågorna

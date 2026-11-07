@@ -304,3 +304,4 @@ kräver eget RF-kort — räkna ~$25–33/enhet färdig.
 - [BEAMFORMING.md](BEAMFORMING.md) — varför 2,4 GHz är bättre för arrayer
 - [FASVAXLARE.md](FASVAXLARE.md) — komponenterna som arrayen kräver
 - [KOSTNADER.md](KOSTNADER.md) — radio- och modulkostnad
+- [POLARISATION.md](POLARISATION.md) — burkens rotation och polarisationsförlust

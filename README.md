@@ -19,7 +19,7 @@ Sekundärmission: **muondetektor** (scintillator + SiPM).
 ```
 /
 ├── README.md      ← den här filen (ingång)
-├── dokument/      ← forskning och design (10 dokument)
+├── dokument/      ← forskning och design (12 dokument)
 ├── bilder/        ← CAD-renderingar
 ├── cad/           ← FeatureScript + generator för gimbalmodellen
 └── arkiv/         ← övergivna spår, sparas för referens
@@ -35,10 +35,12 @@ Läs i den här ordningen om du är ny i projektet:
 |---|---|---|
 | 1 | **[CANSAT-GRUND.md](dokument/CANSAT-GRUND.md)** | Vad en CanSat är, regler, flygprofil, deadlines, moduler |
 | 2 | **[RADIOTEKNIK.md](dokument/RADIOTEKNIK.md)** | Radio-grunder: SNR, Eb/N₀, modulering, LoRa vs WiFi |
-| 3 | **[KOMMUNIKATION.md](dokument/KOMMUNIKATION.md)** | **Huvuddokumentet** — länkbudget, regler, antennval, polarisation |
-| 4 | **[PROTOKOLL.md](dokument/PROTOKOLL.md)** | Vilket radioprotokoll vi väljer (LoRa / 2,4 GHz / BLE) |
-| 5 | **[GIMBAL.md](dokument/GIMBAL.md)** | Markgimbalen — byggplan och CAD |
-| 6 | **[MUONDETEKTOR.md](dokument/MUONDETEKTOR.md)** | Sekundärmissionen |
+| 3 | **[KOMMUNIKATION.md](dokument/KOMMUNIKATION.md)** | **Huvuddokumentet** — design, länkbudget, antennval, dubbelarkitektur |
+| 4 | **[REGELVERK.md](dokument/REGELVERK.md)** | Vad som är tillåtet: EIRP/ERP, duty cycle, Traficom, luftanvändning |
+| 5 | **[POLARISATION.md](dokument/POLARISATION.md)** | Burkens rotation: polarisationsförlust och mönsternolla — och hur man löser det |
+| 6 | **[PROTOKOLL.md](dokument/PROTOKOLL.md)** | Vilket radioprotokoll vi väljer (LoRa / 2,4 GHz / BLE) |
+| 7 | **[GIMBAL.md](dokument/GIMBAL.md)** | Markgimbalen — byggplan och CAD |
+| 8 | **[MUONDETEKTOR.md](dokument/MUONDETEKTOR.md)** | Sekundärmissionen |
 
 ---
 
