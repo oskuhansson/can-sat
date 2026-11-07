@@ -4,3 +4,6 @@
 .obsidian/cache
 .trash/
 .DS_Store
+.obsidian/graph.json
+.obsidian/backlink.json
+.obsidian/appearance.json
