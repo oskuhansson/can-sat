@@ -234,8 +234,9 @@ frakt/moms. Uppdatera mot faktura.*
 | 7 | **Stativ/fäste** | stativ för yagi + gimbal | 10 | 40 |
 | 8 | **PC/loggningshårdvara** | (befintlig PC räcker; ev. adapter/SDR) | 0 | 60 |
 | 9 | **Kablage/kontakter** | SMA/koax, ström, USB | 5 | 20 |
-| 10 | **Reserv (mark)** | extra antenn/modul ~10 % | 10 | 30 |
-| | **TOTALT (mark)** | | **~85** | **~350** |
+| 10 | **10 dB pad (LNA → mottagare)** | Pi-pad av 3 motstånd 0805 (~1–5 €) — färdig Mini-Circuits-dämpare ~50 € | 1 | 5 |
+| 11 | **Reserv (mark)** | extra antenn/modul ~10 % | 10 | 30 |
+| | **TOTALT (mark)** | | **~86** | **~355** |
 
 ### Typiska scenarier (mark)
 

@@ -111,12 +111,13 @@ flowchart LR
 ```mermaid
 flowchart LR
     ANT["Yagi 868<br/>12–15 dBi"] -->|"U.FL, 5 cm<br/>ca −0,2 dB"| LNA
-    LNA["LNA TQP3M9037<br/>NF 0,4 dB<br/>G 20 dB"] -->|"LMR-400<br/>−0,13 dB/m"| RX
-    RX["SX1262 + SX1280<br/>NF ca 6 dB"] -->|"USB"| CTRL["ESP32-S3"]
+    LNA["LNA TQP3M9037<br/>NF 0,4 dB<br/>G 25,3 dB"] -->|"LMR-400, 10 m<br/>−1,28 dB"| PAD["10 dB pad<br/>Pi, 3 motstånd"]
+    PAD -->|"≈ 13,8 dB netto"| RX["SX1262 + SX1280<br/>NF ca 6 dB"]
+    RX -->|"USB"| CTRL["ESP32-S3"]
     CTRL -->|"USB-serial"| PC["PC"]
 ```
 
-### Varför LNA:n sitter vid antennen och inte vid mottagaren
+### Varför LNA:n sitter vid antennen — och padden vid mottagaren
 
 Friis formel för kaskad brusfaktor:
 
@@ -126,15 +127,38 @@ $$
 
 Sätter man **koaxen före LNA:n** blir koaxens dämpning `F₁` — och den adderar direkt till
 systembruset, utan att någon förstärkning kan kompensera den. Med `F_LNA = 1,096` (0,4 dB),
-`G_LNA = 100` (20 dB), `F_RX = 3,98` (6 dB) och 10 m koax:
+`G_LNA = 338,8` (25,3 dB @ 900 MHz — Qorvo-databladet, *inte* 20 dB), `F_RX = 3,98` (6 dB)
+och 10 m LMR-400 (1,28 dB):
 
-| Kabel (10 m @ 868 MHz) | Koax **före** LNA | LNA **före** koax | Vad man vinner |
+| Konfiguration | `F_tot` | NF | Länkmarginal @1,5 km (SF9, 125 kHz) |
 |---|---|---|---|
-| **LMR-400** (1,28 dB) | `F_tot = 1,51` → **1,80 dB** | `F_tot = 1,14` → **0,57 dB** | **1,2 dB** |
-| **RG-58** (5,0 dB) | `F_tot = 3,56` → **5,51 dB** | `F_tot = 1,21` → **0,83 dB** | **4,7 dB** |
+| **Utan LNA** | 5,60 | **7,48 dB** | 65 dB |
+| **LNA utan pad** | 1,16 | **0,65 dB** | 72 dB |
+| **LNA + 10 dB pad** | **1,31** | **1,17 dB** | **~71 dB** |
 
-**Slutsats:** med bra kabel är flytten värd ~1,2 dB; med RG-58 är den värd ~4,7 dB.
-Det är samma arbete — det är bara kabeln som avgör om det lönar sig.
+**Padden kostar 0,52 dB NF** — billigt, eftersom den sitter *efter* förstärkningen. Samma
+Friis-logik som gör att koaxen ska sitta efter LNA:n: en förlust som ligger efter en
+förstärkare delas med förstärkningen. LNA:n ger 25,3 dB, koaxen tar 1,28 dB, padden tar
+10 dB → **13,8 dB netto** in i radion.
+
+**Varför padden sitter vid mottagaringången och inte vid masten:** den finns för att
+**skydda radion**, inte för att förbättra bruset. SX1262 tål **+10 dBm absolut max** och
+**0 dBm rekommenderat**; utan pad levererar LNA:n +10 dBm in i radion redan på ~5 m
+avstånd — det är damage-gränsen. Masten ska förbli enkel, så padden sitter efter koaxen.
+
+> ⚠️ **Bänktestregel:** kör **aldrig** CanSat-sändaren inom ~5 m från markantennen med
+> LNA:n inkopplad och utan pad. Med padden är damage-zonen ~1,5 m och
+> desensibiliseringszonen ~4,9 m — håll er utanför båda. **SX1280:s max-in är inte
+> verifierad** — kontrollera databladet innan ni testar 2,4 GHz-sändaren mot den.
+
+**Skyddszoner** (15 dBi yagi, CanSat-EIRP 16,1 dBm):
+
+| Konfiguration | Desensibiliserad inom | Skadas inom |
+|---|---|---|
+| Utan LNA | ~0,9 m | ~0,3 m |
+| LNA utan pad | ~17 m | **~5 m** ⚠️ |
+| **LNA + 10 dB pad** | **~4,9 m** | **~1,5 m** |
+| 2,4 GHz, LNA utan pad | ~4 m | ~1,2 m |
 
 > ⚠️ LNA:n behöver **matning via koaxen** (bias-T) eller en extra ledare, eftersom den
 > sitter uppe på masten. Planera för det i kabeldragningen.
@@ -202,16 +226,18 @@ sekvensnummer så att marken kan upptäcka luckor i efterhand.
 | Sträcka | Kabel | @868 MHz | @2,4 GHz | Not |
 |---|---|---|---|---|
 | Antenn → LNA | U.FL, **< 5 cm** | ~0,2 dB | ~0,2 dB | håll kort — enda stället det spelar roll |
-| LNA → mottagare | **LMR-400** | **0,13 dB/m** | 0,22 dB/m | 10 m = 1,3 dB ✅ |
-| LNA → mottagare | RG-58 | 0,50 dB/m | 1,06 dB/m | 10 m = 5,0 dB ❌ **undvik** |
+| LNA → pad | **LMR-400** | **0,13 dB/m** | 0,22 dB/m | 10 m = 1,3 dB ✅ |
+| LNA → pad | RG-58 | 0,50 dB/m | 1,06 dB/m | 10 m = 5,0 dB ❌ **undvik** |
+| Pad → mottagare | kort | — | — | padden sitter vid ingången |
 | Mottagare → PC | USB | — | — | håll < 3 m utan hub |
 
 Källor: [LMR-400-datablad (Times Microwave)](https://timesmicrowave.com/wp-content/uploads/2022/06/lmr-400-datasheet-1.pdf)
 — 12,8 dB/100 m @ 900 MHz, 22,2 dB/100 m @ 2,5 GHz.
 
 **Tumregel:** varje dB förlust *före* LNA:n kostar en dB systembrus. Varje dB *efter*
-LNA:n kostar nästan ingenting, eftersom LNA:ns 20 dB förstärkning redan har lyft signalen
-över mottagarens brusgolv.
+LNA:n kostar nästan ingenting, eftersom LNA:ns 25,3 dB förstärkning redan har lyft signalen
+över mottagarens brusgolv. Det är därför 10 dB-padden — som ligger efter både LNA och koax —
+bara kostar 0,52 dB NF, medan samma pad vid masten skulle kosta hela 10 dB.
 
 ---
 

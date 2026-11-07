@@ -49,16 +49,23 @@ Med spridningsfaktor $SF$: $R_c/R_b = 2^{SF}$ (chips per symbol). Varje +1 i SF 
 
 ## 3. 🎯 Den största vinsten med 2,4 GHz: duty cycle
 
-| Band | Duty cycle (Finland) | Airtime under en 120 s flygning |
-|---|---|---|
-| **868 MHz**, 25 mW e.r.p. | **≤ 1 %** | **≈ 1,2 s totalt** |
-| **868 MHz**, 500 mW (sub-band P) | ≤ 10 % | ≈ 12 s |
-| **2,4 GHz** | **ingen gräns** | **hela nedfärden** |
+Duty cycle mäts över **en timme**, inte per flygning — ETSI EN 300 220-2 V3.3.1 §4.4.3.2:
+*"Unless otherwise specified, T_obs is 1 hour"*. 1 % = **36 s lufttid per timme** (samma
+siffra som [REGELVERK.md](REGELVERK.md) §1 anger).
 
-**Detta är avgörande.** Vid 868 MHz ger 1 % duty cycle bara ~1,2 sekunders lufttid under
-en 120 s flygning — knappt en handfull paket. På 2,4 GHz kan man sända **kontinuerligt
-under hela nedfärden**. Det löser låg-bandbreddsproblemet utan att offra moduleringens
-robusthet.
+| Band | Duty cycle (Finland) | Airtime per timme |
+|---|---|---|
+| **868 MHz**, 25 mW e.r.p. | **≤ 1 %** | **36 s** |
+| **868 MHz**, 500 mW (sub-band P) | ≤ 10 % | 360 s |
+| **2,4 GHz** | **ingen gräns** | **obegränsad** |
+
+**Detta är avgörande.** 36 s/h är en budget man delar över **hela evenemanget** — inte
+bara över den 120 s långa nedfärden. Ett 20-byte-paket på SF9/125 kHz tar **108 ms**
+lufttid, så 36 s räcker till ≈ 330 paket per timme — men samma budget ska räcka till
+marktester, kalibrering och hela tävlingsdagen. Och
+**bredbandig telemetri eller video får inte plats alls**: 1 % räcker till en smal ström
+av korta paket, inte till en dataström. På 2,4 GHz kan man sända **kontinuerligt** — det
+löser låg-bandbreddsproblemet utan att offra moduleringens robusthet.
 
 ---
 

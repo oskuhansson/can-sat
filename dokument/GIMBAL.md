@@ -14,8 +14,7 @@ updated: 2026-11-07
 
 
 *Konkret, steg-för-steg plan för att bygga markgimbalen som följer burken. Bygger på
-gimbalkraven i denna fil §5.3 och
-denna fil. CAD-skiss i Onshape ("Gimbal-antenntest").*
+gimbalkraven i KOMMUNIKATION.md §5.3. CAD-skiss i Onshape ("Gimbal-antenntest").*
 
 ---
 
@@ -31,7 +30,7 @@ Gimbalen ska hålla en **yagi-antenn (12–15 dBi)** och vinkla den i **två axl
 | Vinkelhastighet | bara några °/s (8–11 m/s fall) | §5.3 |
 | Uppdatering | 1–5 Hz styring (GPS/RSSI) | §5.3 |
 | Pekfel | ±2–5° räcker (12–15 dBi HPBW ~30–65°) | §5.3 |
-| Miljö | utomhus mars, 0–10 °C, ev. blåst | CANSAT-GUIDEN |
+| Miljö | utomhus mars, 0–10 °C, ev. blåst | CANSAT-GRUND.md |
 | Effekt | lågspänning (t.ex. 5 V / 12 V) | — |
 
 **Designprincip:** allt tungt/svårt på marken. Burkens sändare är bara en monopol; alla
@@ -59,7 +58,7 @@ Delarna i ordning uppifrån:
 
 ---
 
-### 3. Komponentlista (med ungefärlig kostnad — se ovan)
+### 3. Komponentlista (med ungefärlig kostnad — se KOSTNADER.md)
 
 | # | Komponent | Val / spec | Prisklass |
 |---|---|---|---|
@@ -157,8 +156,8 @@ backupen (via omnigiv) ger ändå telemetri/GPS via en separat låg-gain-ruta (�
 
 ---
 
-*Se även: denna fil §5.3 (gimbalkrav),
-ovan (budget), del 1 i denna fil (hur vi
+*Se även: KOMMUNIKATION.md §5.3 (gimbalkrav),
+KOSTNADER.md (budget), QA.md Del 2 (hur vi
 svarar på kritik om gimbalen).*
 
 ---
@@ -166,7 +165,7 @@ svarar på kritik om gimbalen).*
 ## Del 2 — CAD-plan v2 (detaljspecifikation)
 
 
-*Konkret, detaljerad plan för att bygga om gimbalen i Onshape med **NEMA 17-stegmotorer, TMC2209-drivare och GT2-drivremmar (inga kugghjul)**. Ersätter den förenklade modellen i denna fil (v1). Bygger på kraven i denna fil och denna fil §5.3.*
+*Konkret, detaljerad plan för att bygga om gimbalen i Onshape med **NEMA 17-stegmotorer, TMC2209-drivare och GT2-drivremmar (inga kugghjul)**. Ersätter den förenklade modellen i Del 1 (v1). Bygger på kraven i KOMMUNIKATION.md §5.3.*
 
 > **Status:** plan, ännu inte modellerad. Alla mått är *startvärden* som ska bli parametrar i Onshape. Allt som markeras ⚠️ ska kontrolleras mot datablad/leverantör innan beställning eller utskrift.
 

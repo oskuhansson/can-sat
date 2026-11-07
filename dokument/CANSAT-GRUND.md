@@ -37,13 +37,11 @@ flowchart LR
     BOOST["Stigning<br/>~30 G i 2–3 s"]
     APOGEE["Apogeum<br/>750–1100 m"]
     DESCENT["Nedfart<br/>5–12 m/s"]
-    LAND(["Landning"])
-    RECOVER(["Bärgning"])
+    LAND(["Landning<br/>+ bärgning"])
     T0 --> BOOST
     BOOST -->|"utkast"| APOGEE
     APOGEE -->|"fallskärm löses"| DESCENT
     DESCENT --> LAND
-    LAND --> RECOVER
 ```
 
 - **Apogeum (högsta höjd):** 750 m (2026, H219-motor) till 900–1100 m (2024–25).
