@@ -137,13 +137,11 @@ def main() -> int:
         f"fick {sens:.2f}",
     )
 
-    # Lufttid: 20 byte vid SF9/125 kHz tar ~108 ms.
-    # (Formeln multiplicerar med (CR+4)/4; med CR+4 blev det 185 ms, alltså 71 %
-    # för långt, vilket gjorde varje duty cycle-slutsats fel.)
+    # Lufttid: 20 byte vid SF9/125 kHz tar 185,3 ms (AN1200.13).
     airtime = modulation.airtime_s(9, 125.0, 20)
     check(
-        "Lufttid SF9/125 kHz, 20 byte = 108 ms",
-        close(airtime, 0.1085, 0.005),
+        "Lufttid SF9/125 kHz, 20 byte = 185 ms",
+        close(airtime, 0.1853, 0.005),
         f"fick {airtime * 1000:.1f} ms",
     )
     airtime_24 = modulation.airtime_s(9, 812.0, 20)
@@ -621,6 +619,126 @@ def main() -> int:
         s_868_gps["loss_fraction"] < 0.02
         and s_868_nogps["loss_fraction"] < 0.02
         and s_24_nogps["loss_fraction"] < 0.02,
+    )
+
+    # 7. Hybrid — array PA gimbal
+    # ------------------------------------------------------------------
+    print()
+    print("7. Hybrid — array pa gimbal, gimbalen grovpekar och arrayen finjusterar")
+
+    from sim.antenna import make_pattern as _mk  # noqa: PLC0415
+    from sim.config import AntennaConfig as _AC  # noqa: PLC0415
+
+    hyb_cfg = load_scenario("scenarios/cansat_24_hybrid.json").antenna
+    hyb_pat = _mk(hyb_cfg)
+    arr_pat = _mk(load_scenario("scenarios/cansat_24_array.json").antenna)
+
+    # 2x2 med 8 dBi-patch: 8 + 10log10(4) = 14,02 dBi. Inte yagins 17,8 — den
+    # ska fortjanas, inte antas.
+    check(
+        "hybrid: topp = element + 10log10(N) = 14,02 dBi",
+        close(hyb_pat.peak_gain_dbi, 8.0 + 10.0 * math.log10(4), 0.01),
+        f"fick {hyb_pat.peak_gain_dbi:.2f} dBi",
+    )
+    try:
+        _AC.from_dict(
+            {
+                "model": "hybrid",
+                "array_nx": 2,
+                "array_ny": 2,
+                "spacing_lambda": 0.5,
+                "peak_gain_dbi": 17.8,
+            }
+        )
+        rejected = False
+    except ConfigError:
+        rejected = True
+    check("hybrid: avvisar en peak_gain_dbi som inte stammer med elementet", rejected)
+
+    # Med gimbalen riktad mot malet ska forstarkningen vara toppen vid ALLA
+    # elevationer. Det ar precis vad en array utan gimbal inte klarar.
+    for el in (5.0, 30.0, 90.0):
+        g = hyb_pat.gain_towards(0.0, el, 0.0, el)
+        check(
+            f"hybrid: {el:.0f} graders elevation ger toppforstarkning",
+            close(g, hyb_pat.peak_gain_dbi, 0.05),
+            f"fick {g:.2f} dBi",
+        )
+
+    a5 = arr_pat.gain_towards(0.0, 5.0, 0.0, 5.0)
+    h5 = hyb_pat.gain_towards(0.0, 5.0, 0.0, 5.0)
+    check(
+        "array utan gimbal faller vid 5 graders elevation",
+        a5 < 1.0,
+        f"fick {a5:.2f} dBi",
+    )
+    check(
+        "hybrid vinner minst 12 dB over array utan gimbal vid 5 grader",
+        h5 - a5 > 12.0,
+        f"skillnad {h5 - a5:.1f} dB",
+    )
+
+    # Utanfor konen: gimbalen 60 grader fel, arrayen kan bara styra 45. Resten
+    # kostar arrayfaktor, och elementet star pa 45 grader = 12*(45/65)^2 = 5,75 dB.
+    g60 = hyb_pat.gain_towards(0.0, 0.0, 0.0, 60.0)
+    loss60 = hyb_pat.peak_gain_dbi - g60
+    check(
+        "hybrid: 60 graders fel kostar ~6 dB (5,75 scanförlust + restfel)",
+        5.5 < loss60 < 6.5,
+        f"fick {loss60:.2f} dB",
+    )
+    check(
+        "hybrid: ar 2D (tva riktningar kravs)",
+        hyb_pat.is_2d,
+    )
+    check(
+        "array: straalbredden ar full bredd, inte halva",
+        40.0 < arr_pat.beamwidth_3db_deg < 55.0,
+        f"fick {arr_pat.beamwidth_3db_deg:.1f} grader",
+    )
+
+    # Langre fram i flygningen: bada kan peka, men elementet sitter olika nara
+    # sin bredsida. Det ar hela skillnaden. Vid 5 graders elevation star
+    # elementet 85 grader fran bredsidan, sa array-only tappar 12*(85/65)^2 =
+    # 20,5 dB av sitt 8 dBi — den hamnar under 0 dBi trots att den pekar ratt.
+    expected_a5 = 8.0 + 10.0 * math.log10(4) - 12.0 * (85.0 / 65.0) ** 2
+    check(
+        "array utan gimbal vid 5 grader: elementet 85 grader fran bredsidan",
+        close(a5, expected_a5, 0.3),
+        f"fick {a5:.2f} dBi, formeln ger {expected_a5:.2f} dBi",
+    )
+
+    # SX1280:s bandbreddstrappa ar inte 3 dB per dubblering: databladet ger 4 dB
+    # for 203 -> 812 kHz, inte 6.
+    check(
+        "SX1280 SF9/203 kHz = -121 dBm",
+        close(modulation.sensitivity_dbm(9, 203.0, 2400.0), -121.0, 0.1),
+        f"fick {modulation.sensitivity_dbm(9, 203.0, 2400.0):.1f}",
+    )
+    check(
+        "SX1280 SF9/812 kHz = -117 dBm (databladet, inte -123)",
+        close(modulation.sensitivity_dbm(9, 812.0, 2400.0), -117.0, 0.1),
+        f"fick {modulation.sensitivity_dbm(9, 812.0, 2400.0):.1f}",
+    )
+    check(
+        "lufttid SF9/812 kHz, 20 byte = 28,5 ms",
+        close(modulation.airtime_s(9, 812.0, 20), 0.0285, 0.001),
+        f"fick {modulation.airtime_s(9, 812.0, 20) * 1000:.1f} ms",
+    )
+
+    # Utan GPS: hybriden laser nastan direkt, yagin sveper i nastan en minut.
+    hyb_scn = load_scenario("scenarios/cansat_24_hybrid.json")
+    hyb_nogps = replace(hyb_scn, tracker=replace(hyb_scn.tracker, gps_available=False))
+    h_sum = run(hyb_nogps, hyb_scn.seed).summary
+    check(
+        "hybrid: laser utan GPS pa under 1 s",
+        h_sum["lock_time_s"] < 1.0,
+        f"fick {h_sum['lock_time_s']:.2f} s",
+    )
+    check(
+        "hybrid: haller sig inom sin elektroniska kon",
+        h_sum["outside_scan_fraction"] < 0.05,
+        f"fick {100 * h_sum['outside_scan_fraction']:.1f} %",
     )
 
     # ------------------------------------------------------------------

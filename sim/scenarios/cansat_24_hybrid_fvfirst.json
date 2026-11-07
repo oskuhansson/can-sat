@@ -1,0 +1,75 @@
+{
+  "name": "cansat_24_hybrid_fvfirst",
+  "description": "Samma hybrid som cansat_24_hybrid.json, men arkitektur B: fasvaexlare och kombiner FORE en enda LNA vid mottagaren. Da ligger FV:ns 2,5 dB forst i kaskaden och kostar brusfaktor direkt i stallet for att delas med LNA-vinsten. Skillnaden mellan den har filen och cansat_24_hybrid.json ar darfor enbart rx_stages-ordningen.",
+  "seed": 20270311,
+  "time_step_s": 0.1,
+  "trajectory": {
+    "start_position_m": [0.0, 200.0, 1100.0],
+    "descent_rate_mps": 10.0,
+    "wind_mps": [3.0, 1.0],
+    "stop_altitude_m": 0.0,
+    "max_duration_s": 300.0
+  },
+  "station": {
+    "position_m": [0.0, 0.0, 0.0],
+    "antenna_height_m": 2.0
+  },
+  "radio": {
+    "frequency_mhz": 2400.0,
+    "tx_power_dbm": 12.5,
+    "tx_antenna_gain_dbi": 2.0,
+    "rx_stages": [
+      { "name": "U.FL 5 cm per element", "gain_db": -0.2, "noise_figure_db": 0.2 },
+      { "name": "Fasvaexlare MAPS-010144 (typ 2,5 dB)", "gain_db": -2.5, "noise_figure_db": 2.5 },
+      { "name": "4-vags kombiner (excess)", "gain_db": -1.0, "noise_figure_db": 1.0 },
+      { "name": "LNA TQP3M9037 (en, vid mottagaren)", "gain_db": 19.1, "noise_figure_db": 0.43 },
+      { "name": "LMR-400 10 m @2,4", "gain_db": -2.2, "noise_figure_db": 2.2 },
+      { "name": "10 dB pad", "gain_db": -10.0, "noise_figure_db": 10.0 }
+    ],
+    "receiver_noise_figure_db": 6.0,
+    "modulation": "lora_sf9_bw812"
+  },
+  "antenna": {
+    "model": "hybrid",
+    "array_nx": 2,
+    "array_ny": 2,
+    "spacing_lambda": 0.5,
+    "phase_bits": 4,
+    "element_gain_dbi": 8.0,
+    "element_beamwidth_3db_deg": 65.0,
+    "max_scan_deg": 45.0,
+    "backlobe_db": -25.0
+  },
+  "propagation": {
+    "vegetation": {
+      "gamma_db_per_m": 0.34,
+      "a_max_db": 34.1,
+      "foliage_depth_m": 40.0,
+      "foliage_top_m": 20.0
+    },
+    "shadowing": { "sigma_db": 4.0, "correlation": 0.95 },
+    "multipath": { "model": "none" }
+  },
+  "gimbal": {
+    "az_slew_deg_per_s": 30.0,
+    "el_slew_deg_per_s": 30.0,
+    "resolution_deg": 0.1,
+    "backlash_deg": 0.5,
+    "min_elevation_deg": 0.0,
+    "max_elevation_deg": 90.0
+  },
+  "tracker": {
+    "gps_available": true,
+    "gps_horizontal_sigma_m": 5.0,
+    "gps_vertical_sigma_m": 8.0,
+    "lock_delay_s": 2.0,
+    "park_az_deg": 0.0,
+    "park_el_deg": 60.0,
+    "scan_mode": "hybrid",
+    "switch_time_s": 0.001
+  },
+  "packet": {
+    "interval_s": 0.5,
+    "payload_bytes": 20
+  }
+}

@@ -16,7 +16,8 @@
   },
   "radio": {
     "frequency_mhz": 2400.0,
-    "eirp_dbm": 15.0,
+    "tx_power_dbm": 12.5,
+    "tx_antenna_gain_dbi": 2.0,
     "rx_stages": [
       { "name": "U.FL 5 cm", "gain_db": -0.2, "noise_figure_db": 0.2 },
       { "name": "LNA TQP3M9037 @2,4", "gain_db": 19.1, "noise_figure_db": 0.43 },

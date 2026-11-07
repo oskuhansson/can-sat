@@ -15,7 +15,7 @@
     "antenna_height_m": 2.0
   },
   "radio": {
-    "frequency_mhz": 868.0,
+    "frequency_mhz": 868.1,
     "eirp_dbm": 16.1,
     "rx_stages": [
       { "name": "U.FL 5 cm", "gain_db": -0.2, "noise_figure_db": 0.2 },
@@ -61,7 +61,7 @@
     "scan_dwell_s": 0.4
   },
   "packet": {
-    "interval_s": 0.5,
+    "interval_s": 0.7,
     "payload_bytes": 20
   }
 }

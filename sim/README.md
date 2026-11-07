@@ -91,6 +91,7 @@ Registrerade i `antenna.py`, väljs med `"model"` i scenariofilen:
 | `cosn` | `G_max·cosⁿθ` | horn eller patch |
 | `yagi` | huvudlob + sidolober + baklob | grov yagi |
 | `array` | elementmönster + arrayfaktor med faskvantisering | plan fasstyrd array, se nedan |
+| `hybrid` | arrayfaktor, men elementet vid **styrvinkeln** och max `max_scan_deg` | **array på gimbal**, se nedan |
 | `file` | interpolerad tabell | riktigt NEC-mönster |
 
 Ny modell = en funktion med `@register_model("namn")`. Ingen annan fil behöver
@@ -228,15 +229,68 @@ det ingen roll vad gimbalen gör.
 
 868 MHz har **1 % duty cycle** (≈36 s lufttid per timme, ETSI EN 300 220-2
 §4.4.3.2 — mätt över en timme, inte per flygning). Ett paket på 20 byte tar
-**108 ms** på SF9/125 kHz, så 0,5 s intervall ger 220 paket och 23,9 s lufttid
-under en 110 s-flygning: **inom** budgeten. Simulatorn skriver ut det på raden
-`Lufttid under flygningen`.
+**185 ms** på SF9/125 kHz, så:
 
-Gränsen går vid ungefär **3 paket/s** (0,33 s intervall ≈ 36 s). Det är alltså
-inte 2 paket/s som är problemet — det var en felräkning i en tidigare version av
-`airtime_s`, där formeln använde `(CR+4)` i stället för `(CR+4)/4` och gav 185 ms.
+| Paketintervall | Paket under 110 s | Lufttid | Mot 36 s-budgeten |
+|---|---|---|---|
+| 0,5 s | 220 | **40,8 s** | **över** ❌ |
+| 0,7 s | 157 | 29,1 s | inom ✅ |
+
+Scenariot använder därför **0,7 s**. Gränsen går vid ungefär **1,8 paket/s**
+(0,57 s intervall ≈ 36 s). Simulatorn skriver ut raden `Lufttid under
+flygningen` så att budgeten syns vid varje körning.
 
 2,4 GHz har ingen sådan gräns, vilket är hela skälet att bandet är intressant.
+
+---
+
+### Hybrid: array **på** gimbal
+
+`"model": "hybrid"` är projektets ursprungliga arkitektur: en plan array monterad
+på den 2-axliga gimbalen. Gimbalen grovpekar, arrayen finjusterar elektroniskt —
+de gör olika saker, och vinsten ligger i kombinationen.
+
+Modellen skiljer sig från `"array"` på tre punkter, och alla tre behövs:
+
+1. **Arrayens bredsida _är_ gimbalens riktning.** Elementmönstret utvärderas vid
+   **styrvinkeln** — avvikelsen mellan bredsidan och strålen — inte vid den
+   absoluta vinkeln från en fast bredsida. Det är hela skillnaden: utan det här
+   steget ärver hybriden array-only-modellens kollaps mot horisonten.
+2. **Styrningen är begränsad till `max_scan_deg`** (default 45). Utanför konen
+   klämmer arrayen vid gränsen och resten av felet kostar arrayfaktor.
+3. **Scanförlusten är priset.** Elementet tappar `12*(θ/65)²` dB vid styrvinkeln
+   θ: **5,8 dB vid ±45°**. Därför ska gimbalen följa så att styrvinkeln hålls
+   liten.
+
+Toppförstärkningen **ärvs inte** — den räknas fram som
+`element_gain_dbi + 10*log10(nx*ny)`. En 2×2 med 8 dBi-patch ger **14,02 dBi**,
+alltså 3,8 dB under yagins 17,8. Anger scenariofilen ett `peak_gain_dbi` som inte
+stämmer avvisas den, så att en array inte kan få yagins siffra genom att skriva
+den.
+
+| Scenario | Vad det visar |
+|---|---|
+| `cansat_24_hybrid.json` | Arkitektur A: LNA per element **före** fasväxlaren |
+| `cansat_24_hybrid_fvfirst.json` | Arkitektur B: FV och kombiner före en enda LNA |
+
+Skillnaden mellan filerna är enbart `rx_stages`-ordningen. Med per-element-LNA
+hamnar fasväxlarens 2,5 dB **efter** förstärkningen och kostar bara förstärkning;
+utan den ligger den först i kaskaden och kostar brusfaktor direkt.
+
+`"scan_mode": "hybrid"` gör gimbalen till ett **grovt** raster dimensionerat av
+den elektroniska täckningen (`2*max_scan`), och arrayen sveper elektroniskt inom
+varje gimbalposition. Låsning sker när gimbalen är inom `max_scan_deg` från
+målet, för då kan arrayen styra resten.
+
+Parametrarna samlas in med `study.py` (30 seeds per punkt):
+
+```
+python study.py --seeds 30
+```
+
+Den skriver fyra CSV:er: `three` (de tre arkitekturerna), `architecture`
+(LNA-placering × FV-dämpning), `scan` (max_scan × elementgain × gimbalhastighet)
+och `elevation` (förstärkning vid 5/30/90 graders elevation).
 
 ---
 

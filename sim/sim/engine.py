@@ -107,7 +107,12 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
 
     shadowing = propagation.ShadowingProcess(scenario.propagation.shadowing, rng)
     tracker = Tracker(
-        scenario.tracker, pattern.beamwidth_3db_deg, station, rng, airtime_s=airtime
+        scenario.tracker,
+        pattern.beamwidth_3db_deg,
+        station,
+        rng,
+        airtime_s=airtime,
+        max_scan_deg=scenario.antenna.max_scan_deg,
     )
     gimbal = Gimbal(
         scenario.gimbal, scenario.tracker.park_az_deg, scenario.tracker.park_el_deg
@@ -214,10 +219,13 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
         # så att inget befintligt scenario påverkas.
         "scan_mode": scenario.tracker.scan_mode,
         "scan_dwell_s": tracker.scan_dwell_s,
+        "antenna_model": scenario.antenna.model,
         "array_nx": scenario.antenna.array_nx,
         "array_ny": scenario.antenna.array_ny,
         "phase_bits": scenario.antenna.phase_bits,
         "spacing_lambda": scenario.antenna.spacing_lambda,
+        "element_gain_dbi": scenario.antenna.element_gain_dbi,
+        "max_scan_deg": scenario.antenna.max_scan_deg,
     }
     return SimulationResult(scenario.name, used_seed, steps, summary, constants)
 
@@ -266,6 +274,26 @@ def _summarise(
     worst = min(steps, key=lambda s: s.margin_db)
     veg = [s.vegetation_db for s in steps]
 
+    # Hybriden: hur ofta ligger målet utanför den elektroniska konen, så att
+    # arrayen klämmer vid max_scan och gimbalen måste flytta? Och hur stor blir
+    # scanförlusten av att elementet inte pekar rakt fram?
+    max_scan = scenario.antenna.max_scan_deg
+    elem_bw = scenario.antenna.element_beamwidth_3db_deg or 65.0
+    if max_scan is not None:
+        outside = [s for s in steps if s.pointing_error_deg > max_scan]
+        outside_fraction = len(outside) / len(steps)
+        outside_time_s = len(outside) * scenario.time_step_s
+        scan_loss = [
+            12.0 * (min(s.pointing_error_deg, max_scan) / elem_bw) ** 2 for s in steps
+        ]
+        scan_loss_mean_db = sum(scan_loss) / len(scan_loss)
+        scan_loss_max_db = max(scan_loss)
+    else:
+        outside_fraction = float("nan")
+        outside_time_s = float("nan")
+        scan_loss_mean_db = float("nan")
+        scan_loss_max_db = float("nan")
+
     # Duty cycle mäts över en timme, inte över flygningen. Under en flygning på
     # några minuter är det därför hela timbudgeten som är taket.
     total_airtime_s = len(packets) * airtime
@@ -310,4 +338,8 @@ def _summarise(
         "phase_acquire_fraction": sum(1 for s in steps if s.phase == "acquire") / len(steps),
         "scan_mode": scenario.tracker.scan_mode,
         "scan_dwell_s": tracker.scan_dwell_s,
+        "outside_scan_fraction": outside_fraction,
+        "outside_scan_time_s": outside_time_s,
+        "scan_loss_mean_db": scan_loss_mean_db,
+        "scan_loss_max_db": scan_loss_max_db,
     }

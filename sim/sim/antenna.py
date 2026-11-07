@@ -29,6 +29,11 @@ DEFAULT_BACKLOBE_DB = -25.0
 # 70 grader är en typisk patch på jordplan.
 DEFAULT_ELEMENT_BEAMWIDTH_DEG = 70.0
 
+# Strålbredd för patch-elementet i hybriden. En 8 dBi-patch på jordplan ligger
+# typiskt på 60-70 grader; 65 är mittpunkten och den siffra projektets
+# scanförlusträkning utgår från (12*(45/65)^2 = 5,8 dB vid ±45 graders styrning).
+DEFAULT_HYBRID_ELEMENT_BEAMWIDTH_DEG = 65.0
+
 
 class AntennaPattern:
     """Ett mönster: mata in pekfel i grader, få förstärkning i dBi.
@@ -64,7 +69,7 @@ class AntennaPattern:
 
     @property
     def is_2d(self) -> bool:
-        """Sant om mönstret kräver två riktningar (bara arrayen)."""
+        """Sant om mönstret kräver två riktningar (array och hybrid)."""
         return self._gain_fn_2d is not None
 
     def gain_dbi(self, off_angle_deg: float) -> float:
@@ -373,7 +378,106 @@ def _array_beamwidth_deg(
             lo = mid
         else:
             hi = mid
-    return max(0.5, hi)
+    # Bisektionen hittar **halva** bredden (punkten dar forstarkningen fallit
+    # 3 dB fran toppen). De andra modellerna anger full bredd — 17,5 respektive
+    # 48,4 grader — sa halvan maste dubbleras, annars blir straalbredden halv
+    # och antalet sveppositioner fyra ganger for stort.
+    return max(1.0, 2.0 * hi)
+
+
+def _angle_between_uv(u1: float, v1: float, u2: float, v2: float) -> float:
+    """Vinkeln mellan två riktningar givna som riktningscosinus (u, v).
+
+    (u, v) är projektionen på horisontalplanet, så den tredje komponenten är
+    w = sqrt(1 - u^2 - v^2). Skalärprodukten av två enhetsvektorer ger
+    cos(vinkeln) — det är samma vinkel som geometry.pointing_error_deg räknar,
+    bara uttryckt i projektionen i stället för i az/el.
+    """
+    w1 = math.sqrt(max(0.0, 1.0 - u1 * u1 - v1 * v1))
+    w2 = math.sqrt(max(0.0, 1.0 - u2 * u2 - v2 * v2))
+    c = u1 * u2 + v1 * v2 + w1 * w2
+    return math.degrees(math.acos(max(-1.0, min(1.0, c))))
+
+
+@register_model("hybrid")
+def _hybrid(cfg: AntennaConfig) -> Callable[[float], float]:
+    """1D-vägen för hybriden — bara mainlobens form.
+
+    Motorn använder den inte (den går via `gain_towards`), men `AntennaPattern`
+    kräver en 1D-funktion. Den riktiga fysiken ligger i `_hybrid_gain_2d`.
+    """
+    bw = cfg.element_beamwidth_3db_deg or DEFAULT_HYBRID_ELEMENT_BEAMWIDTH_DEG
+    peak = cfg.peak_gain_dbi
+
+    def gain(theta: float) -> float:
+        return peak - min(40.0, 12.0 * (theta / bw) ** 2)
+
+    return gain
+
+
+def _hybrid_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float], float]:
+    """Array **på** gimbal: gimbalen grovpekar, arrayen finjusterar elektroniskt.
+
+    Det här är den arkitektur projektet ursprungligen planerade, och den skiljer
+    sig från `"array"` på tre punkter som alla är avgörande:
+
+    1. **Bredsidan är gimbalens riktning.** Arrayen sitter monterad på gimbalen,
+       så dess bredsida pekar dit gimbalen pekar. Elementmönstret utvärderas
+       därför vid **styrvinkeln** — avvikelsen mellan bredsidan och strålen —
+       inte vid den absoluta vinkeln från en fast bredsida. Utan det här steget
+       ärver hybriden array-only-modellens katastrof mot horisonten.
+    2. **Styrningen är begränsad till ±max_scan_deg.** Utanför konen klämmer
+       arrayen vid gränsen, och resten av felet kostar arrayfaktor. Det är
+       gimbalens jobb att se till att den aldrig behöver klämma länge.
+    3. **Scanförlusten är priset för den elektroniska styrningen.**
+       Elementförstärkningen vid styrvinkeln theta är 12*(theta/65)^2 dB under
+       toppen: 5,8 dB vid ±45 grader. Därför ska gimbalen följa så att
+       styrvinkeln hålls liten — och därför är hybriden ingen gratis lunch.
+    """
+    nx, ny = cfg.array_nx, cfg.array_ny
+    if nx is None or ny is None:
+        raise ConfigError("antenna: modellen 'hybrid' kräver 'array_nx' och 'array_ny'")
+    spacing = cfg.spacing_lambda
+    if spacing is None:
+        raise ConfigError("antenna: modellen 'hybrid' kräver 'spacing_lambda'")
+
+    element_peak = cfg.element_gain_dbi if cfg.element_gain_dbi is not None else 8.0
+    elem_bw = cfg.element_beamwidth_3db_deg or DEFAULT_HYBRID_ELEMENT_BEAMWIDTH_DEG
+    max_scan = cfg.max_scan_deg if cfg.max_scan_deg is not None else 45.0
+    array_gain_db = 10.0 * math.log10(nx * ny)
+
+    element_cfg = AntennaConfig(
+        model="gaussian",
+        peak_gain_dbi=element_peak,
+        beamwidth_3db_deg=elem_bw,
+        backlobe_db=cfg.backlobe_db,
+    )
+    element_gain = _gaussian(element_cfg)
+
+    def gain_2d(u: float, v: float, u0: float, v0: float) -> float:
+        theta_abs = _angle_between_uv(u, v, u0, v0)
+        theta_steer = min(theta_abs, max_scan)
+
+        # Elementet ser styrvinkeln, inte den absoluta vinkeln.
+        elem = element_gain(theta_steer)
+
+        # Arrayfaktorn: styrd mot theta_steer, utvärderad vid theta_abs. Är
+        # målet inom konen blir restfelet noll och AF = 1. Är det utanför blir
+        # AF den dämpning som gimbalen ännu inte har hunnit ta bort.
+        u_steer = math.sin(math.radians(theta_steer))
+        u_targ = math.sin(math.radians(theta_abs))
+        af = array_factor(nx, ny, spacing, u_targ, 0.0, u_steer, 0.0, cfg.phase_bits)
+        return elem + array_gain_db + 20.0 * math.log10(max(af, 1e-6))
+
+    return gain_2d
+
+
+# Modeller vars mönster beror på **var** i (u, v) felet ligger, inte bara hur
+# stort det är. Bara dessa behöver två riktningar; alla andra går via 1D-vägen.
+_TWO_D_BUILDERS: dict[str, Callable[[AntennaConfig], Callable[..., float]]] = {
+    "array": _array_gain_2d,
+    "hybrid": _hybrid_gain_2d,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -409,9 +513,11 @@ def make_pattern(cfg: AntennaConfig) -> AntennaPattern:
         )
     gain_fn = _MODELS[cfg.model](cfg)
 
-    # Bara arrayen har en 2D-väg. För alla andra modeller är den None och
-    # gain_towards faller tillbaka på den ursprungliga vinkelberäkningen.
-    gain_fn_2d = _array_gain_2d(cfg) if cfg.model == "array" else None
+    # Två modeller har en 2D-väg: array (fast bredsida) och hybrid (array på
+    # gimbal). För alla andra är den None och gain_towards faller tillbaka på den
+    # ursprungliga vinkelberäkningen.
+    builder = _TWO_D_BUILDERS.get(cfg.model)
+    gain_fn_2d = builder(cfg) if builder is not None else None
 
     bw = cfg.beamwidth_3db_deg
     if bw is None:

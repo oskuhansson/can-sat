@@ -36,6 +36,13 @@ WIDE_SF203 = {
     12: -130.0,
 }
 
+# SX1280:s datablad anger känsligheten vid fyra bandbredder, och straffet är
+# INTE 3 dB per dubblering i det här bandet: 203 -> 406 -> 812 -> 1625 kHz ger
+# 0, 2, 4 och 10 dB. Att skala med 10log10(BW/203) hade gett 6 dB vid 812 i
+# stället för 4 — alltså 2 dB för pessimistiskt. SF9/812 blir -121 + 4 = -117
+# dBm, vilket är databladets siffra.
+WIDE_BW_OFFSET_DB = {203.0: 0.0, 406.0: 2.0, 812.0: 4.0, 1625.0: 10.0}
+
 _MODE_RE = re.compile(r"^lora_sf(?P<sf>\d+)_bw(?P<bw>\d+)$")
 
 
@@ -67,10 +74,27 @@ def reference_sensitivity_dbm(sf: int, frequency_mhz: float) -> tuple[float, flo
 def sensitivity_dbm(sf: int, bandwidth_khz: float, frequency_mhz: float) -> float:
     """Känslighet vid godtycklig bandbredd.
 
-    Varje dubblering av bandbredden kostar 3 dB: brusgolvet är -174 + 10log10(BW).
+    Under 1 GHz kostar varje dubblering av bandbredden 3 dB, eftersom brusgolvet
+    är -174 + 10log10(BW). På 2,4 GHz är det inte så: SX1280-databladet anger
+    fyra bandbredder och deras faktiska straff, se WIDE_BW_OFFSET_DB.
     """
     base, ref_bw = reference_sensitivity_dbm(sf, frequency_mhz)
-    return base + 10.0 * math.log10(bandwidth_khz / ref_bw)
+
+    if frequency_mhz < 1000.0:
+        return base + 10.0 * math.log10(bandwidth_khz / ref_bw)
+
+    if bandwidth_khz in WIDE_BW_OFFSET_DB:
+        return base + WIDE_BW_OFFSET_DB[bandwidth_khz]
+
+    # Bandbredd mellan tabellpunkterna: interpolera linjärt i log2(BW), vilket är
+    # det som ligger närmast fysiken (brusgolvet är linjärt i log-BW).
+    pts = sorted(WIDE_BW_OFFSET_DB)
+    lo = max((p for p in pts if p <= bandwidth_khz), default=pts[0])
+    hi = min((p for p in pts if p >= bandwidth_khz), default=pts[-1])
+    if lo == hi:
+        return base + WIDE_BW_OFFSET_DB[lo]
+    t = (math.log2(bandwidth_khz) - math.log2(lo)) / (math.log2(hi) - math.log2(lo))
+    return base + WIDE_BW_OFFSET_DB[lo] + t * (WIDE_BW_OFFSET_DB[hi] - WIDE_BW_OFFSET_DB[lo])
 
 
 def airtime_s(
@@ -101,11 +125,12 @@ def airtime_s(
         - (20 if explicit_header else 0)
     )
     denominator = 4 * (sf - 2 * de)
-    # Semtechs formel multiplicerar med (CR+4)/4, alltså 1,25 för 4/5 — inte med
-    # (CR+4). Utan divisionen blir payloaden fyra gånger för lång: 185 ms i
-    # stället för 108 ms för 20 byte på SF9/125 kHz, vilket gör att varje
-    # duty cycle-slutsats blir fel åt det strängare hållet.
-    payload_symbols = 8 + max(math.ceil(numerator / denominator) * (coding_rate + 4) / 4.0, 0)
+    # Faktorn är (CR+4), dar CR = 1..4 for 4/5..4/8 — alltsa 5 for 4/5. Det ar
+    # latt att tro att det ska vara (CR+4)/4, men det gar inte ihop med
+    # bitkapaciteten: 20 byte = 160 bitar och SF9/CR 4/5 bar 7,2 bitar per
+    # symbol, sa det behovs minst 23 symboler. (CR+4)/4 ger 14,25 — omojligt.
+    # Kontroll mot AN1200.13: SF9/125 kHz/20 byte = 185,3 ms.
+    payload_symbols = 8 + max(math.ceil(numerator / denominator) * (coding_rate + 4), 0)
 
     return (preamble_symbols + 4.25 + payload_symbols) * tsym
 

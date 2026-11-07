@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .config import TrackerConfig
+from .config import ConfigError, TrackerConfig
 from .geometry import az_el_range, pointing_error_deg
 
 
@@ -51,12 +51,15 @@ class Tracker:
         station_position: tuple[float, float, float],
         rng: np.random.Generator,
         airtime_s: float = 0.0,
+        max_scan_deg: float | None = None,
     ):
         self.cfg = cfg
         self.station = station_position
         self.rng = rng
         self.beamwidth = beamwidth_deg
         self.electronic = cfg.scan_mode == "electronic"
+        self.hybrid = cfg.scan_mode == "hybrid"
+        self.max_scan_deg = max_scan_deg
 
         # Sökning respektive finjustering har olika noggrannhet.
         search_sigma = (
@@ -74,13 +77,31 @@ class Tracker:
         # sändaren måste man lyssna minst ett helt paket i riktningen. Därför
         # max(switch_time, lufttid) — och därför är elektronisk svepning snabb
         # men inte momentan. Det är hela poängen att simulera.
-        self.scan_dwell_s = (
-            max(cfg.switch_time_s, airtime_s) if self.electronic else cfg.scan_dwell_s
-        )
+        if self.hybrid:
+            # Gimbalen rastrar grovt: varje gimbalposition ska precis täcka den
+            # elektroniska konen, alltså 2*max_scan brett. Arrayen sveper sedan
+            # elektroniskt inne i konen, och varje sådan position kostar
+            # max(switch_time, lufttid) — samma lyssningskrav som ovan.
+            if max_scan_deg is None:
+                raise ConfigError(
+                    "tracker.scan_mode 'hybrid' kräver antenna.max_scan_deg"
+                )
+            coverage = 2.0 * float(max_scan_deg)
+            self.n_az = max(1, math.ceil(360.0 / coverage))
+            self.n_el = max(1, math.ceil(90.0 / coverage))
+            self.n_elec = max(1, math.ceil(coverage / beamwidth_deg)) ** 2
+            self.scan_dwell_s = max(cfg.switch_time_s, airtime_s) * self.n_elec
+            # Låsning när gimbalen är inom konen: då kan arrayen styra resten.
+            self.lock_tolerance_deg = float(max_scan_deg)
+        else:
+            self.n_elec = 1
+            self.scan_dwell_s = (
+                max(cfg.switch_time_s, airtime_s) if self.electronic else cfg.scan_dwell_s
+            )
+            self.n_az = max(1, math.ceil(360.0 / beamwidth_deg))
+            self.n_el = max(1, math.ceil(90.0 / beamwidth_deg))
+            self.lock_tolerance_deg = beamwidth_deg / 2.0
 
-        # Svepet: azimuten varv runt, sedan nästa elevation.
-        self.n_az = max(1, math.ceil(360.0 / beamwidth_deg))
-        self.n_el = max(1, math.ceil(90.0 / beamwidth_deg))
         self.scan_time_s = self.n_az * self.n_el * self.scan_dwell_s
 
         self.lock_time_s: float = math.nan
@@ -158,12 +179,15 @@ class Tracker:
             return TrackerOutput(az + fine, el + fine, "gps", True)
 
         # 2. Utan GPS: svep tills strålen träffar. Låsningen sker när antennens
-        #    riktning ligger inom en halv strålbredd från sändaren — det är då
-        #    länken bär, oavsett om ett paket råkade avkodas just då.
+        #    riktning ligger inom `lock_tolerance_deg` från sändaren — det är då
+        #    länken bär, oavsett om ett paket råkade avkodas just då. Toleransen
+        #    är halva strålbredden mekaniskt, men hela den elektroniska konen för
+        #    hybriden: kan arrayen styra ±45 grader räcker det att gimbalen är
+        #    inom 45 grader, för resten tar elektroniken.
         if math.isnan(self.lock_time_s):
             az_sweep, el_sweep = self._sweep_position(t_s)
             error = pointing_error_deg(az_sweep, el_sweep, true_az, true_el)
-            if error <= self.beamwidth / 2.0:
+            if error <= self.lock_tolerance_deg:
                 self.lock_time_s = t_s
             else:
                 return TrackerOutput(az_sweep, el_sweep, "acquire", False)

@@ -10,6 +10,7 @@ orsaken till att en simulering "inte stämmer" utan att någon märker varför.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any
@@ -168,8 +169,15 @@ class RadioConfig:
 class AntennaConfig:
     """Markantennens mönster. `model` väljer implementation i antenna.py.
 
-    Fälten `array_*` används bara av `"model": "array"` och har None som default,
-    så att scenariofiler som inte är arrayer parsas precis som förut.
+    Fälten `array_*` används av `"model": "array"` och `"model": "hybrid"`, och
+    `element_*`/`max_scan_deg` bara av hybriden. Alla har None som default, så att
+    scenariofiler som inte är arrayer parsas precis som förut.
+
+    **Hybriden ärver inte sin toppförstärkning.** För `"model": "hybrid"` räknas
+    `peak_gain_dbi` fram som `element_gain_dbi + 10*log10(nx*ny)`. Anger filen
+    ändå ett värde kontrolleras det mot det framräknade och avvisas om det
+    avviker — annars kunde en array få yagins 17,8 dBi genom att bara skriva det,
+    och då vore jämförelsen meningslös.
     """
 
     model: str
@@ -184,6 +192,8 @@ class AntennaConfig:
     spacing_lambda: float | None = None
     phase_bits: int | None = None
     element_beamwidth_3db_deg: float | None = None
+    element_gain_dbi: float | None = None
+    max_scan_deg: float | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "AntennaConfig":
@@ -197,23 +207,48 @@ class AntennaConfig:
         ny = data.get("array_ny")
         spacing = data.get("spacing_lambda")
         bits = data.get("phase_bits")
-        if model == "array":
+        if model in ("array", "hybrid"):
             if nx is None or ny is None:
                 raise ConfigError(
-                    "antenna: modellen 'array' kräver 'array_nx' och 'array_ny'"
+                    f"antenna: modellen '{model}' kräver 'array_nx' och 'array_ny'"
                 )
             if int(nx) < 1 or int(ny) < 1:
                 raise ConfigError("antenna.array_nx och array_ny måste vara minst 1")
             if spacing is None:
-                raise ConfigError("antenna: modellen 'array' kräver 'spacing_lambda'")
+                raise ConfigError(f"antenna: modellen '{model}' kräver 'spacing_lambda'")
             if float(spacing) <= 0:
                 raise ConfigError("antenna.spacing_lambda måste vara positiv")
             if bits is not None and int(bits) < 1:
                 raise ConfigError("antenna.phase_bits måste vara minst 1")
 
+        element_gain = data.get("element_gain_dbi")
+        max_scan = data.get("max_scan_deg")
+        if model == "hybrid":
+            if element_gain is None:
+                # 2,4 GHz-patch, 8 dBi, SMA (RangeVideo $15 / EMR $16,68).
+                element_gain = 8.0
+            if max_scan is None:
+                max_scan = 45.0
+            if not 0.0 < float(max_scan) < 90.0:
+                raise ConfigError("antenna.max_scan_deg måste ligga i (0, 90)")
+
+            derived = float(element_gain) + 10.0 * math.log10(int(nx) * int(ny))
+            given = data.get("peak_gain_dbi")
+            if given is not None and abs(float(given) - derived) > 0.05:
+                raise ConfigError(
+                    f"antenna.peak_gain_dbi = {float(given):.2f} stämmer inte med "
+                    f"element_gain_dbi + 10*log10(nx*ny) = {derived:.2f}. "
+                    "Hybriden ska förtjäna sin förstärkning — utelämna fältet."
+                )
+            peak = derived
+        elif data.get("peak_gain_dbi") is None:
+            raise ConfigError("antenna: saknar obligatoriskt fält 'peak_gain_dbi'")
+        else:
+            peak = float(data["peak_gain_dbi"])
+
         return cls(
             model=model,
-            peak_gain_dbi=float(_require(data, "peak_gain_dbi", "antenna")),
+            peak_gain_dbi=peak,
             beamwidth_3db_deg=None if bw is None else float(bw),
             exponent=None if data.get("exponent") is None else float(data["exponent"]),
             sidelobe_db=None if data.get("sidelobe_db") is None else float(data["sidelobe_db"]),
@@ -226,6 +261,8 @@ class AntennaConfig:
             element_beamwidth_3db_deg=None
             if data.get("element_beamwidth_3db_deg") is None
             else float(data["element_beamwidth_3db_deg"]),
+            element_gain_dbi=None if element_gain is None else float(element_gain),
+            max_scan_deg=None if max_scan is None else float(max_scan),
         )
 
 
@@ -338,6 +375,10 @@ class TrackerConfig:
       mekanisk sveptid. Dwell per position blir `max(switch_time_s, lufttid)`:
       för att *upptäcka* sändaren i en riktning måste man lyssna där minst ett
       helt paket. Det är därför elektronisk svepning inte är momentan.
+    * `"hybrid"` — array **på** gimbal: gimbalen gör ett grovt raster
+      dimensionerat av den elektroniska täckningen (2*max_scan), och arrayen
+      scannar elektroniskt inom varje gimbalposition. Låsning sker när gimbalen
+      är inom `max_scan_deg` från målet, för då kan arrayen styra resten.
 
     `simultaneous_beams` modellerar en digital array med flera mottagarkedjor,
     som lyssnar i alla riktningar samtidigt. Låsningstiden blir då noll — det är
@@ -362,9 +403,9 @@ class TrackerConfig:
         _check_keys(cls, data)
         dropout = data.get("gps_dropout_after_s")
         scan_mode = str(data.get("scan_mode", "mechanical"))
-        if scan_mode not in ("mechanical", "electronic"):
+        if scan_mode not in ("mechanical", "electronic", "hybrid"):
             raise ConfigError(
-                f"tracker.scan_mode: okänd '{scan_mode}' (mechanical|electronic)"
+                f"tracker.scan_mode: okänd '{scan_mode}' (mechanical|electronic|hybrid)"
             )
         switch = float(data.get("switch_time_s", 0.001))
         if switch < 0:
