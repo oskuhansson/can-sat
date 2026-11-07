@@ -19,24 +19,81 @@ from typing import Callable
 import numpy as np
 
 from .config import AntennaConfig, ConfigError
+from .geometry import direction_cosines, pointing_error_deg
 
 # Standardnivå för sidolober när inget annat anges, relativt toppen.
 DEFAULT_SIDELOBE_DB = -20.0
 DEFAULT_BACKLOBE_DB = -25.0
 
+# Strålbredd för ett enskilt arrayelement när scenariofilen inte anger någon.
+# 70 grader är en typisk patch på jordplan.
+DEFAULT_ELEMENT_BEAMWIDTH_DEG = 70.0
+
 
 class AntennaPattern:
-    """Ett mönster: mata in pekfel i grader, få förstärkning i dBi."""
+    """Ett mönster: mata in pekfel i grader, få förstärkning i dBi.
 
-    def __init__(self, cfg: AntennaConfig, gain_fn: Callable[[float], float], beamwidth_deg: float):
+    Mönstret har två vägar, och den ena är ny:
+
+    * `gain_dbi(off_angle)` — den ursprungliga. Räcker för varje antenn vars
+      förstärkning bara beror på hur många grader fel den pekar.
+    * `gain_towards(az, el, az_aim, el_aim)` — matar in **två** riktningar. Bara
+      arrayen behöver den, eftersom en arrayfaktor beror på var i (u, v) felet
+      ligger, inte bara hur stort det är. Kvantiseringens sidolober och grating
+      lobes går inte att uttrycka som en funktion av en enda vinkel.
+
+    Motorn anropar alltid `gain_towards`. För alla modeller utom arrayen räknar
+    den om till samma vinkel och anropar `gain_dbi` — alltså exakt samma kodväg
+    som före tillägget, vilket är skälet att de befintliga scenarierna ger
+    oförändrade siffror.
+    """
+
+    def __init__(
+        self,
+        cfg: AntennaConfig,
+        gain_fn: Callable[[float], float],
+        beamwidth_deg: float,
+        gain_fn_2d: Callable[[float, float, float, float], float] | None = None,
+    ):
         self.cfg = cfg
         self.model = cfg.model
         self.peak_gain_dbi = cfg.peak_gain_dbi
         self.beamwidth_3db_deg = beamwidth_deg
         self._gain_fn = gain_fn
+        self._gain_fn_2d = gain_fn_2d
+
+    @property
+    def is_2d(self) -> bool:
+        """Sant om mönstret kräver två riktningar (bara arrayen)."""
+        return self._gain_fn_2d is not None
 
     def gain_dbi(self, off_angle_deg: float) -> float:
-        return float(self._gain_fn(abs(off_angle_deg)))
+        angle = abs(off_angle_deg)
+        if self._gain_fn_2d is None:
+            return float(self._gain_fn(angle))
+        # Arrayen har ingen meningsfull 1D-väg: sidoloberna sitter i (u, v), inte
+        # i vinkeln. Anropas den ändå används bredsidesvepet, som bara ger
+        # huvudlobens form — motorn går alltid via gain_towards.
+        return float(self._gain_fn_2d_from_angle(angle))
+
+    def _gain_fn_2d_from_angle(self, off_angle_deg: float) -> float:
+        u = math.sin(math.radians(off_angle_deg))
+        return self._gain_fn_2d(u, 0.0, 0.0, 0.0)
+
+    def gain_towards(
+        self,
+        az_true_deg: float,
+        el_true_deg: float,
+        az_aim_deg: float,
+        el_aim_deg: float,
+    ) -> float:
+        """Förstärkning i den riktning sändaren faktiskt står, given var antennen pekar."""
+        if self._gain_fn_2d is None:
+            error = pointing_error_deg(az_true_deg, el_true_deg, az_aim_deg, el_aim_deg)
+            return self.gain_dbi(error)
+        u, v = direction_cosines(az_true_deg, el_true_deg)
+        u0, v0 = direction_cosines(az_aim_deg, el_aim_deg)
+        return float(self._gain_fn_2d(u, v, u0, v0))
 
     def __call__(self, off_angle_deg: float) -> float:
         return self.gain_dbi(off_angle_deg)
@@ -177,6 +234,149 @@ def _file(cfg: AntennaConfig) -> Callable[[float], float]:
 
 
 # ---------------------------------------------------------------------------
+# Plan fasstyrd array
+# ---------------------------------------------------------------------------
+
+
+def array_peak_gain_dbi(element_gain_dbi: float, nx: int, ny: int) -> float:
+    """Toppförstärkning för en array: elementets + 10*log10(antal element).
+
+    Koherent summering av N element ger 10*log10(N), inte 20*log10(N): det är
+    effekt som adderas, inte amplitud. Fyra element ger alltså +6,0 dB, sexton
+    ger +12,0 dB. Det är samma siffra som BEAMFORMING.md räknar fram.
+    """
+    if nx < 1 or ny < 1:
+        raise ConfigError("array: nx och ny måste vara minst 1")
+    return element_gain_dbi + 10.0 * math.log10(nx * ny)
+
+
+def array_factor(
+    nx: int,
+    ny: int,
+    spacing_lambda: float,
+    u: float,
+    v: float,
+    u0: float,
+    v0: float,
+    phase_bits: int | None = None,
+) -> float:
+    """Normaliserad arrayfaktor |AF| i [0, 1] för en plan array i horisontalplanet.
+
+    Element (m, n) sitter på (m*dx, n*dy) med dx = dy = spacing_lambda*våglängd.
+    Mäter man avstånd i våglängder blir k*d = 2*pi*spacing_lambda, så våglängden
+    behöver aldrig sättas in — modellen är bandoberoende, precis som resten.
+
+    Styrningen mot (u0, v0) lägger på fasen
+
+        phi_mn = -k(dx*m*u0 + dy*n*v0)
+
+    och med `phase_bits` kvantiseras den fasen till 2^phase_bits nivåer. Det är
+    vad en digital fasväxlare gör — MAPS-010144 är 4-bitars med 22,5 graders steg.
+    Kvantiseringen fyller de ideala nollorna (från −240 dB till omkring −32 dB)
+    men höjer inte toppsidoloben för en uniform array, eftersom belysningens egen
+    sidolob ligger högre: −11,3 dB för 4×4 med d = 0,5λ, kontrollerat mot
+    `|sin(N*pi*d*u)/(N*sin(pi*d*u))|`. Utan kvantisering ritas en ideal array, som
+    är bättre än någon byggbar krets.
+
+    Grating lobes uppstår när spacing_lambda > 0,5: då hamnar en extra huvudlob
+    innanför den synliga delen av (u, v). Vid 0,5 finns bara en lob.
+    """
+    m = np.arange(nx, dtype=float)[:, None]
+    n = np.arange(ny, dtype=float)[None, :]
+
+    steer = -2.0 * math.pi * spacing_lambda * (m * u0 + n * v0)
+    if phase_bits is not None:
+        step = 2.0 * math.pi / float(2**phase_bits)
+        steer = np.round(steer / step) * step
+
+    phase = 2.0 * math.pi * spacing_lambda * (m * u + n * v) + steer
+    # Absolutbeloppet ska ligga UTANFOR summeringen: |sum exp(j*phi)|. Skriver
+    # man abs() innanför blir varje term 1 och arrayfaktorn alltid 1,0 — en bugg
+    # som ser ut som en fungerande array men som aldrig ger sidolober.
+    return float(np.abs(np.exp(1j * phase).sum()) / float(nx * ny))
+
+
+@register_model("array")
+def _array(cfg: AntennaConfig) -> Callable[[float], float]:
+    """1D-vägen för arrayen — bara huvudlobens form.
+
+    Motorn använder den inte (den går via `gain_dbi_2d`), men `AntennaPattern`
+    kräver en 1D-funktion. Sidolober och grating lobes sitter i (u, v) och kan
+    inte uttryckas som en funktion av en enda vinkel.
+    """
+    bw = cfg.beamwidth_3db_deg
+    peak = cfg.peak_gain_dbi
+
+    def gain(theta: float) -> float:
+        if not bw or bw <= 0:
+            return peak
+        return peak - min(40.0, 12.0 * (theta / bw) ** 2)
+
+    return gain
+
+
+def _array_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float], float]:
+    """Bygg arrayens (u, v)-mönster: elementmönster + arrayfaktor."""
+    nx, ny = cfg.array_nx, cfg.array_ny
+    if nx is None or ny is None:
+        raise ConfigError("antenna: modellen 'array' kräver 'array_nx' och 'array_ny'")
+    spacing = cfg.spacing_lambda
+    if spacing is None:
+        raise ConfigError("antenna: modellen 'array' kräver 'spacing_lambda'")
+
+    # Elementets egen vinst räknas fram ur arrayens toppvinst, så att
+    # peak_gain_dbi betyder samma sak för alla modeller: förstärkningen i
+    # bredsidesriktningen.
+    element_peak = cfg.peak_gain_dbi - 10.0 * math.log10(nx * ny)
+    elem_bw = cfg.element_beamwidth_3db_deg or DEFAULT_ELEMENT_BEAMWIDTH_DEG
+
+    # Återanvänd den gaussiska modellen för det enskilda elementet. Det är den
+    # som gör arrayen svag mot horisonten: en horisontell array har sin bredsida
+    # rakt upp, så ett element som sitter på 90 graders zenitvinkel är på sin
+    # egen nollnivå. Det är fysikaliskt riktigt och gör jämförelsen med yagin ärlig.
+    element_cfg = AntennaConfig(
+        model="gaussian",
+        peak_gain_dbi=element_peak,
+        beamwidth_3db_deg=elem_bw,
+        backlobe_db=cfg.backlobe_db,
+    )
+    element_gain = _gaussian(element_cfg)
+    array_gain_db = 10.0 * math.log10(nx * ny)
+
+    def gain_2d(u: float, v: float, u0: float, v0: float) -> float:
+        # zenitvinkeln: sin(zeta) = sqrt(u^2 + v^2)
+        sin_zeta = min(1.0, math.hypot(u, v))
+        zeta = math.degrees(math.asin(sin_zeta))
+        af = array_factor(nx, ny, spacing, u, v, u0, v0, cfg.phase_bits)
+        return element_gain(zeta) + array_gain_db + 20.0 * math.log10(max(af, 1e-6))
+
+    return gain_2d
+
+
+def _array_beamwidth_deg(
+    cfg: AntennaConfig, gain_2d: Callable[[float, float, float, float], float]
+) -> float:
+    """Strålbredd ur mönstret självt, inte ur en formel.
+
+    Scenariofilen kan inte veta vilken strålbredd en 2x2-array med ett givet
+    element mönster får — den beror på både arrayfaktorn och elementets lob. Att
+    skatta den ur förstärkningen som för de andra modellerna skulle ge fel antal
+    sveppositioner. Här söks -3 dB-punkten fram med bisektion i bredsidesplanet,
+    vilket är deterministiskt och kostar några hundra utvärderingar en gång.
+    """
+    peak = gain_2d(0.0, 0.0, 0.0, 0.0)
+    target = peak - 3.0
+    lo, hi = 0.0, 90.0
+    for _ in range(50):
+        mid = 0.5 * (lo + hi)
+        if gain_2d(math.sin(math.radians(mid)), 0.0, 0.0, 0.0) > target:
+            lo = mid
+        else:
+            hi = mid
+    return max(0.5, hi)
+
+
+# ---------------------------------------------------------------------------
 # Fabrik
 # ---------------------------------------------------------------------------
 
@@ -208,7 +408,16 @@ def make_pattern(cfg: AntennaConfig) -> AntennaPattern:
             f"antenna.model: okänd '{cfg.model}'. Tillgängliga: {', '.join(available_models())}"
         )
     gain_fn = _MODELS[cfg.model](cfg)
+
+    # Bara arrayen har en 2D-väg. För alla andra modeller är den None och
+    # gain_towards faller tillbaka på den ursprungliga vinkelberäkningen.
+    gain_fn_2d = _array_gain_2d(cfg) if cfg.model == "array" else None
+
     bw = cfg.beamwidth_3db_deg
     if bw is None:
-        bw = estimate_beamwidth_deg(cfg.peak_gain_dbi)
-    return AntennaPattern(cfg, gain_fn, bw)
+        bw = (
+            _array_beamwidth_deg(cfg, gain_fn_2d)
+            if gain_fn_2d is not None
+            else estimate_beamwidth_deg(cfg.peak_gain_dbi)
+        )
+    return AntennaPattern(cfg, gain_fn, bw, gain_fn_2d=gain_fn_2d)

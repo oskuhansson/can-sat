@@ -10,6 +10,7 @@ så att den kan användas som grind i en pipeline.
 
 from __future__ import annotations
 
+import math
 import sys
 import time
 from dataclasses import replace
@@ -22,10 +23,20 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from sim import geometry, gimbal, linkbudget, modulation, propagation  # noqa: E402
-from sim.antenna import estimate_beamwidth_deg, make_pattern  # noqa: E402
+from sim.antenna import (  # noqa: E402
+    array_factor,
+    array_peak_gain_dbi,
+    estimate_beamwidth_deg,
+    make_pattern,
+)
 from sim.config import ConfigError, load_scenario  # noqa: E402
 from sim.engine import run  # noqa: E402
 from sim.report import to_frame  # noqa: E402
+
+# Samma skael som i run.py: pipeas utskriften blir a/a/o mojibake pa Windows om
+# vi inte tvingar UTF-8. En riktig konsol lamnas orord.
+if not sys.stdout.isatty() and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 SCENARIOS = HERE / "scenarios"
 PASS = 0
@@ -384,6 +395,232 @@ def main() -> int:
         "Stralbredd kan skattas ur forstarkningen",
         10.0 < estimate_beamwidth_deg(15.0) < 60.0,
         f"fick {estimate_beamwidth_deg(15.0):.1f} grader",
+    )
+
+    # ------------------------------------------------------------------
+    section("6. Plan fasstyrd array — fysik, svepning och bakatskompatibilitet")
+
+    sc_arr = load_scenario(SCENARIOS / "cansat_24_array.json")
+    pat_arr = make_pattern(sc_arr.antenna)
+
+    # 6a. Toppforstarkning: koherent summering ger 10log10(N), inte 20log10(N).
+    check(
+        "array: 2x2 ger +6,02 dB over elementet",
+        close(array_peak_gain_dbi(10.0, 2, 2) - 10.0, 6.02, 0.01),
+        f"fick {array_peak_gain_dbi(10.0, 2, 2) - 10.0:.2f} dB",
+    )
+    check(
+        "array: 4x4 ger +12,04 dB over elementet",
+        close(array_peak_gain_dbi(10.0, 4, 4) - 10.0, 12.04, 0.01),
+        f"fick {array_peak_gain_dbi(10.0, 4, 4) - 10.0:.2f} dB",
+    )
+    check(
+        "array: 1x1 ar elementet sjalvt",
+        close(array_peak_gain_dbi(10.0, 1, 1), 10.0, 1e-9),
+    )
+
+    # 6b. Arrayfaktorn ska vara exakt 1 i styrriktningen.
+    check(
+        "array: AF = 1 i styrriktningen",
+        close(array_factor(2, 2, 0.5, 0.0, 0.0, 0.0, 0.0, 4), 1.0, 1e-9),
+        f"fick {array_factor(2, 2, 0.5, 0.0, 0.0, 0.0, 0.0, 4):.6f}",
+    )
+    check(
+        "array: AF ar ocksa 1 utan fasfoenkantisering",
+        close(array_factor(2, 2, 0.5, 0.0, 0.0, 0.0, 0.0, None), 1.0, 1e-9),
+    )
+
+    # 6c. Moenstret ska ga via 2D-vagen, men bara arrayen.
+    check("array: 2D-vagen ar aktiv", pat_arr.is_2d)
+    check("yagi: 2D-vagen ar INTE aktiv", not pattern.is_2d)
+    check(
+        "array: toppforstarkning = scenariots peak_gain_dbi",
+        close(
+            pat_arr.gain_towards(0.0, 90.0, 0.0, 90.0),
+            sc_arr.antenna.peak_gain_dbi,
+            0.01,
+        ),
+        f"fick {pat_arr.gain_towards(0.0, 90.0, 0.0, 90.0):.2f} dBi",
+    )
+    check(
+        "array: straalbredden raeknas fram ur moenstret",
+        10.0 < pat_arr.beamwidth_3db_deg < 60.0,
+        f"fick {pat_arr.beamwidth_3db_deg:.1f} grader",
+    )
+
+    # 6d. Grating lobes: en extra lob hamnar innanfor den synliga regionen
+    #     sa fort elementavstandet overstiger en halv vaglaengd.
+    def peak_outside_mainlobe(nx: int, ny: int, d: float, u0: float, bits=None) -> float:
+        worst = 0.0
+        steps = 3000
+        for i in range(steps + 1):
+            u = 0.55 + (1.0 - 0.55) * i / steps
+            worst = max(worst, array_factor(nx, ny, d, u, 0.0, u0, 0.0, bits))
+        return worst
+
+    grating_1 = peak_outside_mainlobe(4, 4, 1.0, 0.0)
+    grating_half = peak_outside_mainlobe(4, 4, 0.5, 0.0)
+    check(
+        "array: grating lobe vid spacing 1,0",
+        grating_1 > 0.9,
+        f"hogsta AF utanfor huvudloben {grating_1:.3f}",
+    )
+    check(
+        "array: ingen grating lobe vid spacing 0,5",
+        grating_half < 0.4,
+        f"hogsta AF utanfor huvudloben {grating_half:.3f}",
+    )
+
+    # 6e. Fasfoenkantisering. Tva saker galler, och en galler INTE:
+    #     * toppforstarkningen tappar naestan inget (4 bit ~0,03 dB vid styrning
+    #       bort fran bredsidan; exakt mot bredsidan ar styrfasen redan 0)
+    #     * de ideala nollorna fylls igen — dar syns kvantiseringen tydligt
+    #     * toppsidoloben hojs daremot INTE for en 4x4-array, for den uniforma
+    #       belysningens egen sidolob ligger redan hogre an kvantiseringens.
+    #       Den sitter pa -11,30 dB, vilket verifieras mot den analytiska
+    #       formeln nedan i stallet for mot ett handplockat tal.
+    ideal_peak = array_factor(4, 4, 0.5, 0.3, 0.0, 0.3, 0.0, None)
+    q4_peak = array_factor(4, 4, 0.5, 0.3, 0.0, 0.3, 0.0, 4)
+    q4_loss_db = 20.0 * math.log10(q4_peak / ideal_peak)
+    check(
+        "array: 4 bit kostar under 0,1 dB topp",
+        abs(q4_loss_db) < 0.1,
+        f"fick {q4_loss_db:+.4f} dB",
+    )
+
+    null_u = 0.3 + 0.5  # ideal nolla: 2*(u-u0) = 1
+    null_ideal = array_factor(4, 4, 0.5, null_u, 0.0, 0.3, 0.0, None)
+    null_q4 = array_factor(4, 4, 0.5, null_u, 0.0, 0.3, 0.0, 4)
+    check(
+        "array: kvantiseringen fyller de ideala nollorna",
+        null_ideal < 1e-6 and null_q4 > 1e-3,
+        f"ideal {20 * math.log10(max(null_ideal, 1e-12)):.0f} dB, "
+        f"4 bit {20 * math.log10(max(null_q4, 1e-12)):.1f} dB",
+    )
+    q3_peak = array_factor(4, 4, 0.5, 0.3, 0.0, 0.3, 0.0, 3)
+    check(
+        "array: 3 bit tappar mer topp an 4 bit",
+        20.0 * math.log10(q3_peak / ideal_peak) < q4_loss_db,
+        f"3 bit {20 * math.log10(q3_peak / ideal_peak):+.3f} dB mot "
+        f"4 bit {q4_loss_db:+.3f} dB",
+    )
+
+    # Toppsidoloben: den sitter pa v=0 eftersom faktorn aer separabel
+    # (AF(u,v) = AFx(u)*AFy(v)), sa en scan langs u raecker — och en 2D-scan kan
+    # aldrig ge hogre an 1D-sidoloben. Jaemfoer mot den analytiska formeln
+    # |sin(N*pi*d*u)/(N*sin(pi*d*u))|, inte mot ett tal ur luften: en tidigare
+    # version av rapporten angav -5,6 dB, vilket aer fel.
+    def _ref_1d(n: int, d: float, u: float) -> float:
+        psi = math.pi * d * u
+        if abs(math.sin(psi)) < 1e-12:
+            return 1.0
+        return abs(math.sin(n * psi) / (n * math.sin(psi)))
+
+    best_af, best_u = 0.0, 0.0
+    for k in range(201):
+        u = -1.0 + 2.0 * k / 200.0
+        if abs(u) < 0.5:
+            continue  # innanfor huvudloben (forsta nollan vid |u| = 0,5)
+        af = array_factor(4, 4, 0.5, u, 0.0, 0.0, 0.0)
+        if af > best_af:
+            best_af, best_u = af, u
+    ref_af = max(_ref_1d(4, 0.5, 0.5 + 0.5 * k / 20000.0) for k in range(20001))
+    check(
+        "array: toppsidoloben matchar analytisk (-11,3 dB)",
+        abs(best_af - ref_af) < 2e-3,
+        f"modell {20 * math.log10(best_af):.2f} dB vid u={best_u:.2f}, "
+        f"analytisk {20 * math.log10(ref_af):.2f} dB",
+    )
+
+    # 6f. Elektronisk svepning. Utan GPS ar acquisitionen det som avgor allt.
+    arr_seeds = list(range(201, 209))
+
+    def arr_stats(scenario) -> dict[str, float]:
+        runs = [run(scenario, seed=s) for s in arr_seeds]
+        out: dict[str, float] = {}
+        for key in ("lock_time_s", "rx_gain_loss_mean_db", "loss_fraction", "scan_time_s"):
+            values = [r.summary[key] for r in runs]
+            usable = [v for v in values if v == v]
+            out[key] = sum(usable) / len(usable) if usable else float("nan")
+        return out
+
+    nogps = replace(sc_arr, tracker=replace(sc_arr.tracker, gps_available=False))
+    s_arr_el = arr_stats(nogps)
+    s_arr_mech = arr_stats(replace(nogps, tracker=replace(nogps.tracker, scan_mode="mechanical")))
+    s_arr_sim = arr_stats(
+        replace(nogps, tracker=replace(nogps.tracker, simultaneous_beams=True))
+    )
+
+    check(
+        "array: elektronisk svepning laser minst 3x snabbare an mekanisk",
+        s_arr_el["lock_time_s"] * 3.0 < s_arr_mech["lock_time_s"],
+        f"elektronisk {s_arr_el['lock_time_s']:.2f} s mot "
+        f"mekanisk {s_arr_mech['lock_time_s']:.2f} s",
+    )
+    check(
+        "array: elektronisk svepning ger mindre pekforlust an mekanisk",
+        s_arr_el["rx_gain_loss_mean_db"] < s_arr_mech["rx_gain_loss_mean_db"],
+        f"{s_arr_el['rx_gain_loss_mean_db']:.2f} mot "
+        f"{s_arr_mech['rx_gain_loss_mean_db']:.2f} dB",
+    )
+    check(
+        "array: simultana stralar ger lasningstid 0",
+        close(s_arr_sim["lock_time_s"], 0.0, 1e-9),
+        f"fick {s_arr_sim['lock_time_s']:.2f} s",
+    )
+    check(
+        "array: elektroniskt svep ar kortare an mekaniskt",
+        s_arr_el["scan_time_s"] < s_arr_mech["scan_time_s"] / 5.0,
+        f"{s_arr_el['scan_time_s']:.1f} s mot {s_arr_mech['scan_time_s']:.1f} s",
+    )
+
+    print()
+    print("  Fasstyrd 2x2-array kontra 2,4 GHz-yagin (samma band, samma toppvinst)")
+    print("  (bada pekar raett — skillnaden aer moenstret, inte pekfelet):")
+    print("    elevation     array      yagi   skillnad")
+    pat_24 = make_pattern(sc_24.antenna)
+    for el in (90, 60, 30, 15, 10, 5):
+        ga = pat_arr.gain_towards(0.0, el, 0.0, el)
+        gy = pat_24.gain_towards(0.0, el, 0.0, el)
+        print(f"    {el:6d}     {ga:6.2f}    {gy:6.2f}    {ga - gy:+7.2f} dB")
+
+    print()
+    print("  2,4 GHz-arrayen utan GPS, medel oever 8 seed:")
+    print("    svepning        lasning   pekforlust   forlust    svep")
+    for label, st in (
+        ("mekanisk", s_arr_mech),
+        ("elektronisk", s_arr_el),
+        ("simultana", s_arr_sim),
+    ):
+        print(
+            f"    {label:<12} {st['lock_time_s']:7.2f} s"
+            f" {st['rx_gain_loss_mean_db']:9.2f} dB"
+            f" {st['loss_fraction'] * 100:8.1f} %"
+            f" {st['scan_time_s']:7.1f} s"
+        )
+
+    # 6g. Bakatskompatibilitet: de tre ursprungliga scenarierna ska ge samma
+    #     siffror som fore arrayen. Dessa tre varden aer tagna ur baslinjen.
+    check(
+        "bakatskompatibilitet: 868 med GPS ger 2,0 s",
+        close(s_868_gps["lock_time_s"], 2.0, 0.05),
+        f"fick {s_868_gps['lock_time_s']:.2f} s",
+    )
+    check(
+        "bakatskompatibilitet: 868 utan GPS ger 3,2 s",
+        close(s_868_nogps["lock_time_s"], 3.2, 0.05),
+        f"fick {s_868_nogps['lock_time_s']:.2f} s",
+    )
+    check(
+        "bakatskompatibilitet: 2,4 utan GPS ger 33,6 s",
+        close(s_24_nogps["lock_time_s"], 33.6, 0.05),
+        f"fick {s_24_nogps['lock_time_s']:.2f} s",
+    )
+    check(
+        "bakatskompatibilitet: de tre scenarierna tappar inga paket",
+        s_868_gps["loss_fraction"] < 0.02
+        and s_868_nogps["loss_fraction"] < 0.02
+        and s_24_nogps["loss_fraction"] < 0.02,
     )
 
     # ------------------------------------------------------------------

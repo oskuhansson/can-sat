@@ -166,7 +166,11 @@ class RadioConfig:
 
 @dataclass(frozen=True)
 class AntennaConfig:
-    """Markantennens mönster. `model` väljer implementation i antenna.py."""
+    """Markantennens mönster. `model` väljer implementation i antenna.py.
+
+    Fälten `array_*` används bara av `"model": "array"` och har None som default,
+    så att scenariofiler som inte är arrayer parsas precis som förut.
+    """
 
     model: str
     peak_gain_dbi: float
@@ -175,6 +179,11 @@ class AntennaConfig:
     sidelobe_db: float | None = None
     backlobe_db: float | None = None
     pattern_file: str | None = None
+    array_nx: int | None = None
+    array_ny: int | None = None
+    spacing_lambda: float | None = None
+    phase_bits: int | None = None
+    element_beamwidth_3db_deg: float | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "AntennaConfig":
@@ -183,6 +192,25 @@ class AntennaConfig:
         bw = data.get("beamwidth_3db_deg")
         if model in ("gaussian", "cosn") and bw is None and data.get("exponent") is None:
             raise ConfigError(f"antenna: modellen '{model}' kräver 'beamwidth_3db_deg'")
+
+        nx = data.get("array_nx")
+        ny = data.get("array_ny")
+        spacing = data.get("spacing_lambda")
+        bits = data.get("phase_bits")
+        if model == "array":
+            if nx is None or ny is None:
+                raise ConfigError(
+                    "antenna: modellen 'array' kräver 'array_nx' och 'array_ny'"
+                )
+            if int(nx) < 1 or int(ny) < 1:
+                raise ConfigError("antenna.array_nx och array_ny måste vara minst 1")
+            if spacing is None:
+                raise ConfigError("antenna: modellen 'array' kräver 'spacing_lambda'")
+            if float(spacing) <= 0:
+                raise ConfigError("antenna.spacing_lambda måste vara positiv")
+            if bits is not None and int(bits) < 1:
+                raise ConfigError("antenna.phase_bits måste vara minst 1")
+
         return cls(
             model=model,
             peak_gain_dbi=float(_require(data, "peak_gain_dbi", "antenna")),
@@ -191,6 +219,13 @@ class AntennaConfig:
             sidelobe_db=None if data.get("sidelobe_db") is None else float(data["sidelobe_db"]),
             backlobe_db=None if data.get("backlobe_db") is None else float(data["backlobe_db"]),
             pattern_file=data.get("pattern_file"),
+            array_nx=None if nx is None else int(nx),
+            array_ny=None if ny is None else int(ny),
+            spacing_lambda=None if spacing is None else float(spacing),
+            phase_bits=None if bits is None else int(bits),
+            element_beamwidth_3db_deg=None
+            if data.get("element_beamwidth_3db_deg") is None
+            else float(data["element_beamwidth_3db_deg"]),
         )
 
 
@@ -292,7 +327,22 @@ class GimbalConfig:
 
 @dataclass(frozen=True)
 class TrackerConfig:
-    """Pekstrategin. `gps_available=False` tvingar fram en svepande acquisition."""
+    """Pekstrategin. `gps_available=False` tvingar fram en svepande acquisition.
+
+    `scan_mode` avgör **hur** antennen flyttas mellan sveppositionerna:
+
+    * `"mechanical"` (default) — en gimbal med svephastighet, glapp och
+      upplösning. Dwell per position är `scan_dwell_s`.
+    * `"electronic"` — en fasstyrd array som byter strålposition på
+      mikrosekunder. Samma antal positioner (samma strålbredd), men ingen
+      mekanisk sveptid. Dwell per position blir `max(switch_time_s, lufttid)`:
+      för att *upptäcka* sändaren i en riktning måste man lyssna där minst ett
+      helt paket. Det är därför elektronisk svepning inte är momentan.
+
+    `simultaneous_beams` modellerar en digital array med flera mottagarkedjor,
+    som lyssnar i alla riktningar samtidigt. Låsningstiden blir då noll — det är
+    den undre gränsen, inte ett byggbart system i den här budgeten.
+    """
 
     gps_available: bool = True
     gps_horizontal_sigma_m: float = 5.0
@@ -303,11 +353,22 @@ class TrackerConfig:
     park_el_deg: float = 45.0
     scan_dwell_s: float = 0.4
     rssi_fine_sigma_deg: float | None = None
+    scan_mode: str = "mechanical"
+    switch_time_s: float = 0.001
+    simultaneous_beams: bool = False
 
     @classmethod
     def from_dict(cls, data: dict) -> "TrackerConfig":
         _check_keys(cls, data)
         dropout = data.get("gps_dropout_after_s")
+        scan_mode = str(data.get("scan_mode", "mechanical"))
+        if scan_mode not in ("mechanical", "electronic"):
+            raise ConfigError(
+                f"tracker.scan_mode: okänd '{scan_mode}' (mechanical|electronic)"
+            )
+        switch = float(data.get("switch_time_s", 0.001))
+        if switch < 0:
+            raise ConfigError("tracker.switch_time_s får inte vara negativ")
         return cls(
             gps_available=bool(data.get("gps_available", True)),
             gps_horizontal_sigma_m=float(data.get("gps_horizontal_sigma_m", 5.0)),
@@ -320,6 +381,9 @@ class TrackerConfig:
             rssi_fine_sigma_deg=None
             if data.get("rssi_fine_sigma_deg") is None
             else float(data["rssi_fine_sigma_deg"]),
+            scan_mode=scan_mode,
+            switch_time_s=switch,
+            simultaneous_beams=bool(data.get("simultaneous_beams", False)),
         )
 
 

@@ -90,10 +90,77 @@ Registrerade i `antenna.py`, väljs med `"model"` i scenariofilen:
 | `gaussian` | `G_max − 12(θ/θ₃dB)²` | **samma formel som projektets pekförlust** |
 | `cosn` | `G_max·cosⁿθ` | horn eller patch |
 | `yagi` | huvudlob + sidolober + baklob | grov yagi |
+| `array` | elementmönster + arrayfaktor med faskvantisering | plan fasstyrd array, se nedan |
 | `file` | interpolerad tabell | riktigt NEC-mönster |
 
 Ny modell = en funktion med `@register_model("namn")`. Ingen annan fil behöver
 ändras.
+
+### Plan fasstyrd array
+
+`"model": "array"` lägger en plan array i horisontalplanet, styrd elektroniskt i
+stället för mekaniskt. Den kräver fyra fält utöver de vanliga:
+
+| Fält | Betydelse |
+|---|---|
+| `array_nx`, `array_ny` | antal element i respektive led |
+| `spacing_lambda` | elementavstånd i våglängder; **över 0,5 ger grating lobes** |
+| `phase_bits` | fasväxlarens upplösning. 4 = 22,5° steg (MAPS-010144). Utelämnas = ideal fas |
+| `element_beamwidth_3db_deg` | det enskilda elementets lob, default 70° |
+
+`peak_gain_dbi` betyder samma sak som för alla andra modeller: förstärkningen i
+bredsidesriktningen. Elementets egen vinst räknas fram ur den, som
+`element = peak − 10log₁₀(nx·ny)`, så att alla scenarier går att jämföra på samma
+siffra.
+
+Två saker som modellen gör rätt och som är lätta att missa:
+
+- **Koherent summering ger `10log₁₀(N)`**, inte `20log₁₀(N)`. 2×2 ger +6,02 dB,
+  4×4 ger +12,04 dB.
+- **Elementmönstret gör arrayen svag mot horisonten.** En horisontell array har
+  bredsidan rakt upp; ett element som sitter på 90° zenitvinkel ligger på sin egen
+  nollnivå. Det är fysikaliskt riktigt — och det är därför en array förlorar mot en
+  yagi sent i nedfarten.
+
+Strålbredden **räknas fram ur mönstret** med bisektion i stället för att anges,
+eftersom den beror på både arrayfaktorn och elementets lob. Att skatta den ur
+förstärkningen som för de andra modellerna skulle ge fel antal sveppositioner.
+
+#### Kvantiseringens effekt — och varför den inte syns där man tror
+
+4-bitars fasväxlare kostar **0,034 dB** toppförstärkning (vid styrning bort från
+bredsidan; exakt mot bredsidan är styrfasen redan 0 och förlusten är noll). Man
+kunde tro att de också höjer sidoloberna, och det gör de: ideala nollor fylls
+igen, från −240 dB till −31,9 dB. Men **toppsidoloben höjs inte** för en 4×4-array
+med `d = 0,5λ`, eftersom den uniforma belysningens egen sidolob redan ligger på
+**−11,3 dB** — högre än kvantiseringens. Slutsatsen är att 4-bitars fasväxlare
+räcker gott här: det är belysningen, inte kvantiseringen, som sätter
+sidolobenivån. Amplitudtaper hade sänkt den, och då hade kvantiseringen blivit
+synlig.
+
+> **−11,3 dB är kontrollerat** mot den analytiska formeln för en uniform linjär
+> array, `|sin(Nπdu)/(N sin(πdu))|`, som ger −11,30 dB vid `u = 0,732` för N = 4
+> och `d = 0,5λ`. Eftersom 2D-faktorn är separabel (`AF(u,v) = AFx(u)·AFy(v)`) är
+> 2D-arrayens högsta sidolob densamma som 1D-sidoloben — den kan aldrig bli
+> högre. En tidigare version av det här avsnittet angav −5,6 dB; det var fel.
+
+#### Svepning: mekanisk, elektronisk eller simultan
+
+`tracker.scan_mode` avgör hur strålen flyttas mellan sveppositionerna:
+
+| `scan_mode` | Dwell per position | Modellerar |
+|---|---|---|
+| `"mechanical"` (default) | `scan_dwell_s` | gimbal med svephastighet, glapp, upplösning |
+| `"electronic"` | `max(switch_time_s, lufttid)` | fasstyrd array, ingen mekanik alls |
+
+Elektronisk svepning är **inte momentan**: för att *upptäcka* sändaren i en riktning
+måste man lyssna där minst ett helt paket. Antalet positioner är detsamma som för
+mekanisk svepning, eftersom strålbredden är densamma — det är bara dwellen som
+skiljer. `switch_time_s` (default 1 ms) är den tid själva omslaget tar.
+
+`simultaneous_beams: true` modellerar en digital array med flera mottagarkedjor som
+lyssnar i alla riktningar samtidigt. Låsningstiden blir då 0 — den undre gränsen,
+inte ett byggbart system i den här budgeten.
 
 ### Fysiken
 
@@ -130,6 +197,10 @@ Det här är viktigare att veta än vad den gör.
 - **Ingen antennkonstruktion.** Mönstret är en modell, inte ett NEC-resultat.
   Vill man veta hur yagin faktiskt ser ut ska man köra 4NEC2 och använda
   `"model": "file"`.
+- **Ingen ömsesidig koppling mellan arrayelementen**, ingen amplitudtaper och
+  inget riktigt elementmönster. Arrayen använder den gaussiska modellen för sitt
+  element; en riktig patch har en annan lob och en cross-pol-nivå som inte finns
+  här. Arrayfaktorn själv är däremot exakt.
 - **Ingen IMU, ingen pendling, ingen rotationsdynamik** i burken.
 - **Ingen tidsynkronisering eller paketförluster i protokollet** utöver PER.
 - **Banan är rak** med konstant sjunkhastighet och konstant vind.
@@ -146,6 +217,7 @@ Det här är viktigare att veta än vad den gör.
 |---|---|
 | `cansat_868.json` | CanSat 868 MHz, SF9/125 kHz, 15 dBi yagi, GPS-tracker, vegetation |
 | `cansat_24.json` | Samma bana på 2,4 GHz, 17,8 dBi (samma fysiska apertur), 17,5° lob |
+| `cansat_24_array.json` | Samma bana och radio, men **plan 2×2-array** med 4-bitars fasväxlare och elektronisk svepning |
 | `generic_example.json` | **Inte CanSat**: radiosond på 433 MHz, rundstrålande antenn, ingen vegetation |
 
 Den sista filen finns för att bevisa generiken, och självtesterna kör den. Att

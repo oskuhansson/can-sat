@@ -50,11 +50,13 @@ class Tracker:
         beamwidth_deg: float,
         station_position: tuple[float, float, float],
         rng: np.random.Generator,
+        airtime_s: float = 0.0,
     ):
         self.cfg = cfg
         self.station = station_position
         self.rng = rng
         self.beamwidth = beamwidth_deg
+        self.electronic = cfg.scan_mode == "electronic"
 
         # Sökning respektive finjustering har olika noggrannhet.
         search_sigma = (
@@ -65,10 +67,21 @@ class Tracker:
         self.rssi_sigma_search = search_sigma
         self.rssi_sigma_fine = max(0.2, search_sigma / 5.0)
 
+        # Tiden man måste stå still i varje strålposition.
+        #
+        # Mekaniskt: gimbalens dwell, som är en mekanisk tidskonstant.
+        # Elektroniskt: strålen flyttas på mikrosekunder, men för att UPPTÄCKA
+        # sändaren måste man lyssna minst ett helt paket i riktningen. Därför
+        # max(switch_time, lufttid) — och därför är elektronisk svepning snabb
+        # men inte momentan. Det är hela poängen att simulera.
+        self.scan_dwell_s = (
+            max(cfg.switch_time_s, airtime_s) if self.electronic else cfg.scan_dwell_s
+        )
+
         # Svepet: azimuten varv runt, sedan nästa elevation.
         self.n_az = max(1, math.ceil(360.0 / beamwidth_deg))
         self.n_el = max(1, math.ceil(90.0 / beamwidth_deg))
-        self.scan_time_s = self.n_az * self.n_el * cfg.scan_dwell_s
+        self.scan_time_s = self.n_az * self.n_el * self.scan_dwell_s
 
         self.lock_time_s: float = math.nan
         self._rssi_offset = 0.0
@@ -79,11 +92,13 @@ class Tracker:
     def _sweep_position(self, t_s: float) -> tuple[float, float]:
         """Var antennen står i svepet vid tiden t.
 
-        Azimuten stegar ett steg per `scan_dwell_s` och går varv runt innan
-        elevationen höjs ett steg. Sekvensen är deterministisk — samma seed ska
-        ge samma svep.
+        Azimuten stegar ett steg per dwell och går varv runt innan elevationen
+        höjs ett steg. Sekvensen är deterministisk — samma seed ska ge samma
+        svep. Sekvensen är identisk för mekanisk och elektronisk svepning; det är
+        bara dwellen som skiljer, eftersom arrayen har samma strålbredd och
+        därför samma antal positioner.
         """
-        dwell = max(1e-6, self.cfg.scan_dwell_s)
+        dwell = max(1e-6, self.scan_dwell_s)
         total = self.n_az * self.n_el
         step = int(t_s / dwell) % total
 
@@ -121,6 +136,13 @@ class Tracker:
         """Vilken azimut/elevation gimbalen ska styras mot vid tiden t."""
         cfg = self.cfg
         true_az, true_el, _ = az_el_range(self.station, true_pos)
+
+        # 0. Digital array med flera mottagarkedjor lyssnar i alla riktningar
+        #    samtidigt. Då finns riktningen från första stunden och det finns
+        #    ingen acquisitionsfas alls — låsningstiden blir noll. Det är den
+        #    undre gränsen, inte ett system i den här budgeten.
+        if cfg.simultaneous_beams and math.isnan(self.lock_time_s):
+            self.lock_time_s = t_s
 
         # 1. Har vi GPS? Då är riktningen känd så fort första paketet kommit.
         gps_active = cfg.gps_available and (

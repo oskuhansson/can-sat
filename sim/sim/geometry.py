@@ -62,6 +62,26 @@ def pointing_error_deg(az_a: float, el_a: float, az_b: float, el_b: float) -> fl
     return math.degrees(math.acos(cos_sep))
 
 
+def direction_cosines(az_deg: float, el_deg: float) -> tuple[float, float]:
+    """Riktningscosinus (u, v) för en riktning på himlen.
+
+    En plan array i horisontalplanet bryr sig inte om azimut och elevation var för
+    sig, utan om var på enhetscirkeln riktningen ligger när den projiceras upp på
+    antennplanet. Det är den projektionen (u, v) som arrayfaktorn räknas i.
+
+    Med zenitvinkeln zeta = 90 - el gäller u = sin(zeta)*cos(az) och
+    v = sin(zeta)*sin(az), alltså u = cos(el)*cos(az) och v = cos(el)*sin(az).
+    Följden u^2 + v^2 = cos^2(el) <= 1 är den himmel som är synlig ovanför
+    horisonten; horisonten själv ligger på enhetscirkeln.
+
+    En riktning rakt upp (el = 90) ger (0, 0), vilket är arrayens bredsida.
+    """
+    el = math.radians(el_deg)
+    az = math.radians(az_deg)
+    cos_el = math.cos(el)
+    return (cos_el * math.cos(az), cos_el * math.sin(az))
+
+
 def elevation_at_range(altitude_m: float, range_m: float) -> float:
     """Elevationen till en punkt på given höjd och snedavstånd."""
     if range_m <= 0:

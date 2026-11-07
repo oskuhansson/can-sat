@@ -1,6 +1,6 @@
 {
   "name": "cansat_868",
-  "description": "CanSat 868 MHz. LoRa SF9/125 kHz, 25 mW e.r.p., 15 dBi yagi pa 2-axlig gimbal, GPS-styrd tracker med RSSI-finjustering. LNA + 10 dB pad i mottagarkedjan.",
+  "description": "CanSat 868 MHz. LoRa SF9/125 kHz, 25 mW e.r.p., 15 dBi yagi på 2-axlig gimbal, GPS-styrd tracker med RSSI-finjustering. LNA + 10 dB pad i mottagarkedjan.",
   "seed": 20270311,
   "time_step_s": 0.1,
   "trajectory": {

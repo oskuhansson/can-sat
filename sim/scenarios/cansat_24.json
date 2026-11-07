@@ -1,6 +1,6 @@
 {
   "name": "cansat_24",
-  "description": "CanSat 2,4 GHz. LoRa SF9/812 kHz pa SX1280, 17,8 dBi (samma fysiska apertur som 868-yagin), straalbredd 17,5 grader. Samma bana som 868 sa att scenarierna gar att jamfora.",
+  "description": "CanSat 2,4 GHz. LoRa SF9/812 kHz på SX1280, 17,8 dBi (samma fysiska apertur som 868-yagin), strålbredd 17,5 grader. Samma bana som 868 så att scenarierna går att jämföra.",
   "seed": 20270311,
   "time_step_s": 0.1,
   "trajectory": {

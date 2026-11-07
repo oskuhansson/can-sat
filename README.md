@@ -54,7 +54,7 @@ Läs i den här ordningen om du är ny i projektet:
 | **[FASVAXLARE.md](dokument/FASVAXLARE.md)** | Fasväxlare för 868 MHz och 2,4 GHz — vilka fungerar, priser, varningar |
 | **[KOSTNADER.md](dokument/KOSTNADER.md)** | Hela budgeten mot taket ≤ 500 € |
 | **[QA.md](dokument/QA.md)** | Kunskapsquiz, faktakontroll och svar på tuff kritik |
-| **[sim/README.md](sim/README.md)** | **Simulering** — pekfel, paketförlust och duty cycle över tid. Generisk modell, egna scenarier i JSON |
+| **[sim/README.md](sim/README.md)** | **Simulering** — pekfel, paketförlust och duty cycle över tid. Generisk modell, egna scenarier i JSON. Inkl. fasstyrd array med elektronisk svepning |
 
 ---
 

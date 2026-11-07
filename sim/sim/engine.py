@@ -71,7 +71,7 @@ class SimulationResult:
     seed: int
     steps: list[Step]
     summary: dict[str, float | str]
-    constants: dict[str, float] = field(default_factory=dict)
+    constants: dict[str, float | int | str | None] = field(default_factory=dict)
 
     def rows(self) -> list[dict]:
         """Tidsserien som lista av dictar, redo för CSV eller DataFrame."""
@@ -107,11 +107,12 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
 
     shadowing = propagation.ShadowingProcess(scenario.propagation.shadowing, rng)
     tracker = Tracker(
-        scenario.tracker, pattern.beamwidth_3db_deg, station, rng
+        scenario.tracker, pattern.beamwidth_3db_deg, station, rng, airtime_s=airtime
     )
     gimbal = Gimbal(
         scenario.gimbal, scenario.tracker.park_az_deg, scenario.tracker.park_el_deg
     )
+    electronic = scenario.tracker.scan_mode == "electronic"
 
     timestamps = time_steps(scenario.trajectory, scenario.time_step_s)
     steps: list[Step] = []
@@ -127,12 +128,18 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
         position = descent_track(scenario.trajectory, t)
         az_true, el_true, distance = az_el_range(station, position)
 
-        # Vad trackern tror, och vart gimbalen faktiskt pekar.
+        # Vad trackern tror, och vart antennen faktiskt pekar.
         command = tracker.command(t, position, signal_ok)
-        az_gimbal, el_gimbal = gimbal.step(dt, command.az_deg, command.el_deg)
+        if electronic:
+            # Fasstyrd array: strålen flyttas elektroniskt. Ingen svephastighet,
+            # inget glapp, ingen mekanisk upplösning — men den egna
+            # faskvantiseringen finns kvar i arrayfaktorn.
+            az_gimbal, el_gimbal = command.az_deg, command.el_deg
+        else:
+            az_gimbal, el_gimbal = gimbal.step(dt, command.az_deg, command.el_deg)
 
         error = pointing_error_deg(az_true, el_true, az_gimbal, el_gimbal)
-        rx_gain = pattern.gain_dbi(error)
+        rx_gain = pattern.gain_towards(az_true, el_true, az_gimbal, el_gimbal)
 
         # Vägen från sändare till mottagare.
         losses = propagation.total_path_loss_db(
@@ -203,6 +210,14 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
         "scan_time_s": tracker.scan_time_s,
         "frequency_mhz": scenario.radio.frequency_mhz,
         "eirp_dbm": scenario.radio.eirp_dbm,
+        # Array- och svepuppgifter. None för alla scenarier som inte är arrayer,
+        # så att inget befintligt scenario påverkas.
+        "scan_mode": scenario.tracker.scan_mode,
+        "scan_dwell_s": tracker.scan_dwell_s,
+        "array_nx": scenario.antenna.array_nx,
+        "array_ny": scenario.antenna.array_ny,
+        "phase_bits": scenario.antenna.phase_bits,
+        "spacing_lambda": scenario.antenna.spacing_lambda,
     }
     return SimulationResult(scenario.name, used_seed, steps, summary, constants)
 
@@ -293,4 +308,6 @@ def _summarise(
         "beamwidth_3db_deg": pattern.beamwidth_3db_deg,
         "tolerance_1db_deg": linkbudget.tolerance_angle_deg(pattern.beamwidth_3db_deg, 1.0),
         "phase_acquire_fraction": sum(1 for s in steps if s.phase == "acquire") / len(steps),
+        "scan_mode": scenario.tracker.scan_mode,
+        "scan_dwell_s": tracker.scan_dwell_s,
     }

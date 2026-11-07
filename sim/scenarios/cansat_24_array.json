@@ -1,0 +1,73 @@
+{
+  "name": "cansat_24_array",
+  "description": "CanSat 2,4 GHz med plan fasstyrd 2x2-array i horisontalplanet, 4-bitars fasväxlare (22,5 graders steg), spacing 0,5 lambda. Elektronisk svepning: strålen flyttas utan mekanik. Exakt samma bana, radiofront och vegetation som cansat_24.json, och samma toppförstärkning (17,8 dBi), så att jämförelsen med yagin isolerar mönstrets form. Strålbredden räknas fram ur arrayfaktorn i stället för att anges.",
+  "seed": 20270311,
+  "time_step_s": 0.1,
+  "trajectory": {
+    "start_position_m": [0.0, 200.0, 1100.0],
+    "descent_rate_mps": 10.0,
+    "wind_mps": [3.0, 1.0],
+    "stop_altitude_m": 0.0,
+    "max_duration_s": 300.0
+  },
+  "station": {
+    "position_m": [0.0, 0.0, 0.0],
+    "antenna_height_m": 2.0
+  },
+  "radio": {
+    "frequency_mhz": 2400.0,
+    "eirp_dbm": 15.0,
+    "rx_stages": [
+      { "name": "U.FL 5 cm", "gain_db": -0.2, "noise_figure_db": 0.2 },
+      { "name": "LNA TQP3M9037 @2,4", "gain_db": 19.1, "noise_figure_db": 0.43 },
+      { "name": "LMR-400 10 m @2,4", "gain_db": -2.2, "noise_figure_db": 2.2 },
+      { "name": "10 dB pad", "gain_db": -10.0, "noise_figure_db": 10.0 }
+    ],
+    "receiver_noise_figure_db": 6.0,
+    "modulation": "lora_sf9_bw812"
+  },
+  "antenna": {
+    "model": "array",
+    "peak_gain_dbi": 17.8,
+    "array_nx": 2,
+    "array_ny": 2,
+    "spacing_lambda": 0.5,
+    "phase_bits": 4,
+    "element_beamwidth_3db_deg": 70.0,
+    "backlobe_db": -25.0
+  },
+  "propagation": {
+    "vegetation": {
+      "gamma_db_per_m": 0.34,
+      "a_max_db": 34.1,
+      "foliage_depth_m": 40.0,
+      "foliage_top_m": 20.0
+    },
+    "shadowing": { "sigma_db": 4.0, "correlation": 0.95 },
+    "multipath": { "model": "none" }
+  },
+  "gimbal": {
+    "az_slew_deg_per_s": 30.0,
+    "el_slew_deg_per_s": 30.0,
+    "resolution_deg": 0.1,
+    "backlash_deg": 0.5,
+    "min_elevation_deg": 0.0,
+    "max_elevation_deg": 90.0
+  },
+  "tracker": {
+    "gps_available": true,
+    "gps_horizontal_sigma_m": 5.0,
+    "gps_vertical_sigma_m": 8.0,
+    "lock_delay_s": 2.0,
+    "park_az_deg": 0.0,
+    "park_el_deg": 60.0,
+    "scan_dwell_s": 0.4,
+    "scan_mode": "electronic",
+    "switch_time_s": 0.001,
+    "simultaneous_beams": false
+  },
+  "packet": {
+    "interval_s": 0.5,
+    "payload_bytes": 20
+  }
+}
