@@ -60,12 +60,13 @@ siffra som [REGELVERK.md](REGELVERK.md) §1 anger).
 | **2,4 GHz** | **ingen gräns** | **obegränsad** |
 
 **Detta är avgörande.** 36 s/h är en budget man delar över **hela evenemanget** — inte
-bara över den 120 s långa nedfärden. Ett 20-byte-paket på SF9/125 kHz tar **108 ms**
-lufttid, så 36 s räcker till ≈ 330 paket per timme — men samma budget ska räcka till
-marktester, kalibrering och hela tävlingsdagen. Och
-**bredbandig telemetri eller video får inte plats alls**: 1 % räcker till en smal ström
-av korta paket, inte till en dataström. På 2,4 GHz kan man sända **kontinuerligt** — det
-löser låg-bandbreddsproblemet utan att offra moduleringens robusthet.
+bara över den 120 s långa nedfärden. Ett 20-byte-paket på SF9/125 kHz tar **185 ms**
+lufttid, så 36 s räcker till ≈ **194 paket per timme**. Att skicka 2 paket/s under en
+110 s-flygning kostar 41 s och **spräcker budgeten** — gränsen ligger vid ~1,8 paket/s.
+Och samma budget ska räcka till marktester, kalibrering och hela tävlingsdagen. **Bredbandig
+telemetri eller video får inte plats alls**: 1 % räcker till en smal ström av korta paket,
+inte till en dataström. På 2,4 GHz kan man sända **kontinuerligt** — det löser
+låg-bandbreddsproblemet utan att offra moduleringens robusthet.
 
 ---
 
