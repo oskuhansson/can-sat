@@ -155,7 +155,170 @@ SNR-tröskel och därför mycket längre räckvidd. (Det som gör att EQ-NOW har
 
 ---
 
-## 6. Hur allt hänger ihop med er design (mark-RX)
+## 6. Bandbredd vs datahastighet — och varför bredare inte är gratis
+
+**Två helt olika storheter som lätt blandas ihop:**
+
+| | **Bandbredd** | **Datahastighet** |
+|---|---|---|
+| Enhet | **Hz** (kHz) | **bit/s** (kb/s) |
+| Vad det är | Hur mycket **spektrum** signalen tar | Hur mycket **information** som kommer fram |
+| Analogi | Bredden på röret | Vattenflödet genom det |
+| Styrs av | Kanalvalet | Kanalval **+** spridningsfaktor |
+| Regleras | Ja — du äger bara din kanal | Nej |
+
+**Bandbredd är en resurs. Datahastighet är ett resultat.** En FM-station använder 200 kHz
+för att skicka musik — bandbredden är kostnaden, inte innehållet.
+
+### 6.1 Formeln som binder dem samman
+
+För LoRa (CSS) är chiphastigheten numeriskt lika med bandbredden. Varje symbol bär $SF$
+bitar men tar $2^{SF}$ chips:
+
+$$
+R_s = \frac{BW}{2^{SF}}
+\qquad\Longrightarrow\qquad
+\boxed{R_b = SF \cdot \frac{BW}{2^{SF}}}
+$$
+
+Kontroll mot SX1280-databladet (SF5, BW 1625 kHz):
+
+$$
+R_b = 5 \cdot \frac{1\,625\,000}{2^5} = 253\,906\ \text{bit/s} = \mathbf{253{,}9\ kb/s}\ ✓
+$$
+
+### 6.2 Känsligheten — de två rattarna ger båda 3 dB
+
+$$
+P_{\text{min}} = -174 + 10\log_{10}(BW) + NF + \text{SNR}_{\text{min}}(SF)
+$$
+
+| Ratt | Ändring | Effekt på känslighet |
+|---|---|---|
+| **Bandbredd** | $\times 2$ | **+3 dB** (sämre) — brusgolvet $N = kTB$ fördubblas |
+| **SF** | $+1$ | **−3 dB** (bättre) — processvinst $10\log_{10}(2)$ |
+
+SX1280:s känslighet vid 2,4 GHz (PER 1 %, CR 4/5, 10 byte):
+
+| BW \ SF | SF5 | SF6 | SF7 | SF8 | SF9 | SF10 | SF11 | SF12 |
+|---|---|---|---|---|---|---|---|---|
+| 203 kHz | −109 | −111 | −115 | −118 | −121 | −124 | −127 | **−130** |
+| 406 kHz | −107 | −110 | −113 | −116 | −119 | −122 | −125 | −128 |
+| 812 kHz | −105 | −108 | −112 | −115 | −117 | −120 | −123 | −126 |
+| **1625 kHz** | **−99** | −103 | −106 | −109 | −111 | −114 | −117 | −120 |
+
+Kontroll: SF5→SF12 vid 203 kHz är 7 steg $\times$ 3 dB = 21 dB (−109 → −130) ✓
+Och 203→1625 kHz är $\log_2(8) = 3$ dubbleringar $\times$ 3 dB = 9 dB (−130 → −120) ✓
+
+### 6.3 ⚠️ Myten: "bredare bandbredd ger mer data gratis"
+
+Det ser ut så i tabellen om man läser slarvigt:
+
+| Inställning | Känslighet | Datahastighet |
+|---|---|---|
+| 203 kHz, SF7 | −115 dBm | 11,1 kb/s |
+| 1625 kHz, SF10 | −114 dBm | **15,9 kb/s** |
+
+Samma känslighet, 43 % mer data — men **8× mer spektrum**. Är det gratis?
+
+**Nej. Teorin säger exakt noll.** Dubbla BW ger +3 dB brus; höj SF ett steg ger −3 dB
+tillbaka. Och datahastigheten:
+
+$$
+BW \times 2 \Rightarrow R_b \times 2
+\qquad\text{men}\qquad
+SF + 1 \Rightarrow R_b \times \frac{SF+1}{2\,SF} \approx \div 2
+$$
+
+**Netto noll.** 1 dB-skillnaden i tabellen är databladets avrundning. Kontrollera med
+203/SF7 mot 406/SF8:
+
+$$
+11{,}1 \cdot \frac{2 \cdot 8/2}{7} = 12{,}7\ \text{kb/s}\ ✓
+\qquad(\text{tabellen: } {-115} \to {-116}\ \text{dBm, alltså 1 dB})
+$$
+
+> **Du kan inte köpa datahastighet med bandbredd.** Du flyttar bara samma växel mellan
+> två rattar — och gör det med bredare bandbredd blir det **rent slöseri**: samma
+> prestanda, mer spektrum.
+
+### 6.4 Den eleganta detaljen: bandbredden kancellerar
+
+Spektral effektivitet = datahastighet per Hz:
+
+$$
+\frac{R_b}{BW} = \frac{SF}{2^{SF}}
+$$
+
+**Bandbredden försvinner.** Det betyder att **SF** bestämmer hur effektiv moduleringen är,
+medan bandbredden bara skalar hela systemet upp eller ner.
+
+| SF | Effektivitet | Jämför |
+|---|---|---|
+| SF5 | 0,156 bit/s/Hz | |
+| SF7 | 0,055 | |
+| SF10 | 0,010 | |
+| SF12 | **0,003** | WiFi: 2–6 bit/s/Hz |
+
+0,003 bit/s/Hz är extremt lågt. **LoRa köper känslighet genom att slösa spektrum** — det är
+hela poängen med tekniken.
+
+### 6.5 Nackdelarna med hög bandbredd
+
+| Nackdel | Detalj |
+|---|---|
+| **Ryms inte på 868 MHz** | Sub-bandet är **600 kHz brett** (868,0–868,6 MHz). BW ≥ 812 kHz är fysiskt omöjligt. |
+| **Mer störningsexponering** | En 1625 kHz-kanal på 2,4 GHz överlappar större delen av en WiFi-kanal (20 MHz) → fångar fler *riktiga* störare |
+| **Högre ström** | SX1280: **5,5 mA** vid 203 kHz mot **7,5 mA** vid 1625 kHz (+36 %) |
+| **Sämre känslighet vid samma SF** | 3 dB per fördubbling → 10 dB mellan 203 och 1625 kHz ≈ **3× kortare räckvidd** |
+| **Ingen effektivitetsvinst** | $SF/2^{SF}$ är oförändrat — du får inget extra per Hz |
+
+### 6.6 Ryms bandbredden i bandet? (avgörande vid 868 MHz)
+
+| BW | Ryms i 868,0–868,6 MHz? |
+|---|---|
+| 203 kHz | ✅ |
+| 406 kHz | ✅ (knappt) |
+| 812 kHz | ❌ |
+| 1625 kHz | ❌ |
+
+**1625 kHz är fysiskt omöjligt på 868 MHz.** Därför använder LoRaWAN i EU 125 och 250 kHz.
+På 2,4 GHz är det inget problem — kanalerna ligger 5 MHz isär.
+
+### 6.7 ✅ Den enda ärliga vinsten: kortare lufttid
+
+Med bred bandbredd går paketet ut snabbare. Ett 20-byte-paket:
+
+$$
+T_{\text{air}} \approx \frac{8 \cdot n_{\text{byte}}}{R_b}
+$$
+
+| Inställning | Datahastighet | Lufttid |
+|---|---|---|
+| SF12 / 203 kHz | 0,595 kb/s | **~270 ms** |
+| SF10 / 203 kHz | 1,98 kb/s | ~81 ms |
+| SF10 / 1625 kHz | 15,87 kb/s | **~10 ms** |
+
+Vid 868 MHz med **1 % duty cycle** (36 s/timme) är detta skillnaden mellan ~130 paket i
+timmen och tusentals. **Har du länkmarginal att spare är bred bandbredd + låg SF det som
+ger mest telemetri inom duty-cycle-budgeten.**
+
+Notera: vinsten handlar om **tid**, inte om känslighet.
+
+### 6.8 Beslutsregel
+
+| Band | Välj | Varför |
+|---|---|---|
+| **868 MHz** | Smalast möjliga BW, hög SF | Max räckvidd; bandet är bara 600 kHz; duty cycle 1 % tvingar fram korta paket |
+| **2,4 GHz** | Bredast möjliga BW, låg SF | Ingen duty-gräns, gott om spektrum, korta lufttider → mer data |
+
+**Tumregel:** *bandbredd är hur mycket spektrum du bränner, datahastighet är vad du får ut
+— och i LoRa är det SF, inte bandbredden, som avgör hur effektivt du omvandlar det ena
+till det andra.*
+
+---
+
+## 7. Hur allt hänger ihop med er design (mark-RX)
 
 | Koncept | Var det dyker upp i erat uppdrag |
 |---|---|
