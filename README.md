@@ -19,7 +19,7 @@ Sekundärmission: **muondetektor** (scintillator + SiPM).
 ```
 /
 ├── README.md      ← den här filen (ingång)
-├── dokument/      ← forskning och design (12 dokument)
+├── dokument/      ← forskning och design (13 dokument)
 ├── bilder/        ← CAD-renderingar
 ├── cad/           ← FeatureScript + generator för gimbalmodellen
 └── arkiv/         ← övergivna spår, sparas för referens
@@ -41,6 +41,7 @@ Läs i den här ordningen om du är ny i projektet:
 | 6 | **[PROTOKOLL.md](dokument/PROTOKOLL.md)** | Vilket radioprotokoll vi väljer (LoRa / 2,4 GHz / BLE) |
 | 7 | **[GIMBAL.md](dokument/GIMBAL.md)** | Markgimbalen — byggplan och CAD |
 | 8 | **[MUONDETEKTOR.md](dokument/MUONDETEKTOR.md)** | Sekundärmissionen |
+| 9 | **[KOPPLING.md](dokument/KOPPLING.md)** | **Kopplingsschema** — blockdiagram, bussar, pinout, kabeldragning |
 
 ---
 
@@ -74,12 +75,20 @@ stängde 30.10.2026.
 
 ## Designen i korthet
 
-```
-BURKEN                                   MARKEN
-enkel monopol (omni)                     hög-gain-antenn på gimbal
-  ├─ LoRa 868 MHz: GPS + telemetri         ├─ 12–23 dBi yagi/array
-  └─ 2,4 GHz: hög datatakt, fri duty       ├─ RSSI + GPS följer burken
-                                           └─ PC loggar allt
+```mermaid
+flowchart LR
+    subgraph B["BURKEN — enkel monopol (omni)"]
+        B1["LoRa 868 MHz<br/>GPS + telemetri"]
+        B2["2,4 GHz<br/>hög datatakt, fri duty"]
+    end
+    subgraph M["MARKEN — hög-gain-antenn på gimbal"]
+        M1["12–23 dBi yagi / array"]
+        M2["RSSI + GPS följer burken"]
+        M3["PC loggar allt"]
+        M1 --> M2 --> M3
+    end
+    B1 -.->|"868 MHz"| M1
+    B2 -.->|"2,4 GHz"| M1
 ```
 
 **Varför:** allt som är svårt (förstärkning, pekning, mekanik) hamnar på marken där det
@@ -87,6 +96,8 @@ inte finns massa-, volym- eller effektgränser. Burken förblir minimal och tål
 
 **Nyckeltal:** 868 MHz LoRa ger ~60–80 dB länkmarginal. 2,4 GHz ger ~20 dB vid max
 datahastighet — men **ingen duty-cycle-gräns** (mot 1 % på 868 MHz).
+
+📐 **Fullständiga kopplingsscheman, pinout och kabeldragning: [KOPPLING.md](dokument/KOPPLING.md).**
 
 ---
 
@@ -108,6 +119,7 @@ datahastighet — men **ingen duty-cycle-gräns** (mot 1 % på 868 MHz).
 - [x] Forskning: protokollval och priser (PROTOKOLL)
 - [x] Forskning: polarisation och mönsternolla (KOMMUNIKATION, del 3)
 - [x] CAD: markgimbal i Onshape (GIMBAL)
+- [x] Dokumentation: kopplingsschema i Mermaid (KOPPLING)
 - [ ] **Kontakta ESERO Finland** (registrering, antennregler, frekvensplan)
 - [ ] Inköp: MAPS-010144 ×4 (bara 38 i lager — bråttom), LNA, radio
 - [ ] Prototyp: LoRa-beacon + markgimbal-tracker (RSSI + GPS)
