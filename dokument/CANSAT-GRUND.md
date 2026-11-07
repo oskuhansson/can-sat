@@ -32,14 +32,14 @@ driven av [ESERO Finland](https://www.esero.fi) (i samarbete med ESA).
 ## 2. Hur en CanSat-flygning går till (flygprofilen)
 
 ```mermaid
-flowchart TB
+flowchart LR
     T0(["T+0 uppskjutning"])
     BOOST["Stigning<br/>~30 G i 2–3 s"]
     APOGEE["Apogeum<br/>750–1100 m"]
-    DESCENT["Nedfart<br/>5–12 m/s i 70–120 s"]
+    DESCENT["Nedfart<br/>5–12 m/s"]
     LAND(["Landning"])
     RECOVER(["Bärgning"])
-    T0 -->|"motorbrand"| BOOST
+    T0 --> BOOST
     BOOST -->|"utkast"| APOGEE
     APOGEE -->|"fallskärm löses"| DESCENT
     DESCENT --> LAND
