@@ -98,7 +98,9 @@ def format_summary(result: SimulationResult) -> str:
     )
     out.append(_line("Låsningstid", _fmt_seconds(s["lock_time_s"])))
     if s["scan_time_s"] > 0:
-        out.append(_line("Fullt svep tar", f"{s['scan_time_s']:.0f} s", "utan GPS"))
+        # Två decimaler: med heltal blev ett svep på 0,46 s "0 s", vilket ser ut
+        # som om ingen sveptid finns alls.
+        out.append(_line("Fullt svep tar", f"{s['scan_time_s']:.2f} s", "utan GPS"))
     out.append(
         _line("Pekfel, medel (låst)", f"{s['pointing_error_locked_mean_deg']:.2f}°")
     )

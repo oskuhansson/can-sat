@@ -91,7 +91,7 @@ Registrerade i `antenna.py`, väljs med `"model"` i scenariofilen:
 | `cosn` | `G_max·cosⁿθ` | horn eller patch |
 | `yagi` | huvudlob + sidolober + baklob | grov yagi |
 | `array` | elementmönster + arrayfaktor med faskvantisering | plan fasstyrd array, se nedan |
-| `hybrid` | arrayfaktor, men elementet vid **styrvinkeln** och max `max_scan_deg` | **array på gimbal**, se nedan |
+| `hybrid` | elementet vid vinkeln mot **bredsidan**, arrayfaktorn vid restfelet, max `max_scan_deg` | **array på gimbal**, se nedan |
 | `file` | interpolerad tabell | riktigt NEC-mönster |
 
 Ny modell = en funktion med `@register_model("namn")`. Ingen annan fil behöver
@@ -250,17 +250,29 @@ flygningen` så att budgeten syns vid varje körning.
 på den 2-axliga gimbalen. Gimbalen grovpekar, arrayen finjusterar elektroniskt —
 de gör olika saker, och vinsten ligger i kombinationen.
 
-Modellen skiljer sig från `"array"` på tre punkter, och alla tre behövs:
+Modellen skiljer sig från `"array"` på fyra punkter, och alla fyra behövs:
 
 1. **Arrayens bredsida _är_ gimbalens riktning.** Elementmönstret utvärderas vid
-   **styrvinkeln** — avvikelsen mellan bredsidan och strålen — inte vid den
-   absoluta vinkeln från en fast bredsida. Det är hela skillnaden: utan det här
-   steget ärver hybriden array-only-modellens kollaps mot horisonten.
+   vinkeln mellan **målet och bredsidan**. Det är den enda raden som gör att
+   förstärkningen rasar när målet ligger utanför konen: ett mål 90° från
+   bredsidan ska ha elementets nollnivå, inte samma förstärkning som ett på 45°.
 2. **Styrningen är begränsad till `max_scan_deg`** (default 45). Utanför konen
-   klämmer arrayen vid gränsen och resten av felet kostar arrayfaktor.
-3. **Scanförlusten är priset.** Elementet tappar `12*(θ/65)²` dB vid styrvinkeln
-   θ: **5,8 dB vid ±45°**. Därför ska gimbalen följa så att styrvinkeln hålls
-   liten.
+   klämmer strålen vid gränsen och resten av felet kostar arrayfaktor.
+3. **Kommandot är skilt från målet.** Under svepningen vet antennen inte var
+   sändaren är. Skickas ingen kommandoriktning antas strålen styra mot målet —
+   det är låst läge. Motorn skickar alltid den faktiska kommandoriktningen, så
+   arrayen inte blir ett orakel som pekar perfekt innan den hittat något.
+4. **Scanförlusten är priset.** Elementet tappar `12*(θ/65)²` dB vid vinkeln från
+   bredsidan: **5,8 dB vid ±45°** och **10,2 dB vid ±60°**. Därför ska gimbalen
+   följa så att vinkeln hålls liten.
+
+> **Två buggar som har funnits här, och vad de kostade.** Elementmönstret
+> utvärderades tidigare vid den *klämda* vinkeln (`min(theta_abs, max_scan)`)
+> i stället för vid observationsvinkeln. Ett mål 90° bort fick då samma
+> förstärkning som ett på 45°: **+17,25 dB för mycket**, och 60°-förlusten
+> rapporterades som 5,9 dB i stället för 10,4. Dessutom styrdes arrayen mot
+> sanningen under svepningen, så den pekade rätt innan den hittat något.
+> Båda är rättade, och regressionstesterna pinnar 60°-förlusten vid 10,37 dB.
 
 Toppförstärkningen **ärvs inte** — den räknas fram som
 `element_gain_dbi + 10*log10(nx*ny)`. En 2×2 med 8 dBi-patch ger **14,02 dBi**,
@@ -277,10 +289,39 @@ Skillnaden mellan filerna är enbart `rx_stages`-ordningen. Med per-element-LNA
 hamnar fasväxlarens 2,5 dB **efter** förstärkningen och kostar bara förstärkning;
 utan den ligger den först i kaskaden och kostar brusfaktor direkt.
 
-`"scan_mode": "hybrid"` gör gimbalen till ett **grovt** raster dimensionerat av
-den elektroniska täckningen (`2*max_scan`), och arrayen sveper elektroniskt inom
-varje gimbalposition. Låsning sker när gimbalen är inom `max_scan_deg` från
-målet, för då kan arrayen styra resten.
+`"scan_mode": "hybrid"` gör gimbalen till ett **täckt raster**: ringar med den
+azimuttäthet som krävs på varje elevation, verifierat numeriskt till ≥99,9 % av
+himlen för `max_scan` 15–60°. Låsning sker när **den faktiska** gimbalriktningen
+är inom `max_scan_deg` från målet, och först efter en `scan_dwell_s` — arrayen
+måste lyssna igenom sina elektroniska delpositioner innan den kan säga att
+sändaren är hittad.
+
+Rastrets täthet spelar roll: med `max_scan = 15°` blir det 55 positioner och
+0,26 s dwell, alltså 14 s per varv — och eftersom gimbalen bara svänger 30°/s
+hinner den inte följa rastret. **Då låser den aldrig** om parkeringsriktningen
+ligger mer än 15° fel. Vid 30° och däröver låser den direkt.
+
+### Vad hybriden är värd — och vad som var en artefakt
+
+Tidigare rapporterades att hybriden vann **~15 dB i sämsta marginal** mot yagin.
+Det var till stor del en artefakt: yagin tvingades svepa blint från horisonten
+även under de första sekunderna, trots att en operatör ställer den i
+uppskjutningsriktningen. Med `"park_and_hold": true` — håll parkeringsriktningen
+tills första paketet kommer — blir bilden en annan (2,4 GHz, 10 seeds, GPS på):
+
+| Parkering | Yagi, sämsta marginal | Hybrid, sämsta marginal | Hybridens fördel |
+|---|---|---|---|
+| Ingen (svep från t=0) | 17,2 dB | 30,5 dB | **+13,3 dB** |
+| Parkeringsriktning el 60° | 27,4 dB | 29,6 dB | +2,2 dB |
+| **Exakt rätt riktning** | **35,4 dB** | **29,8 dB** | **−5,6 dB** |
+
+Så: **i strykstate är hybriden ~5 dB sämre än yagin** — 3,8 dB lägre
+antennförstärkning plus högre brusfaktor. Den *äkta* vinsten är inte mot yagin
+utan mot **arrayen utan gimbal**: 14,5 dB i sämsta marginal (29,8 mot 15,3), och
+den kommer helt från att elementmönstret slipper se 85° från bredsidan.
+
+Det som återstår som hybridens verkliga fördel är tid: den låser på 0,3 s mot
+yagin 2,0 s (GPS) och 35 s (utan GPS, 17,5°-lob).
 
 Parametrarna samlas in med `study.py` (30 seeds per punkt):
 

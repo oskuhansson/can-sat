@@ -383,6 +383,12 @@ class TrackerConfig:
     `simultaneous_beams` modellerar en digital array med flera mottagarkedjor,
     som lyssnar i alla riktningar samtidigt. Låsningstiden blir då noll — det är
     den undre gränsen, inte ett byggbart system i den här budgeten.
+
+    `park_and_hold` modellerar vad en operatör faktiskt gör: gimbalen ställs i
+    den förväntade uppskjutningsriktningen (`park_az_deg`, `park_el_deg`) och står
+    still tills första paketet kommit, i stället för att svepa blint. Utan det
+    tvingas en riktantenn svepa i onödan innan låsning och framstår som sämre än
+    den är. Med det blir jämförelsen mellan arkitekturerna rättvis.
     """
 
     gps_available: bool = True
@@ -397,6 +403,7 @@ class TrackerConfig:
     scan_mode: str = "mechanical"
     switch_time_s: float = 0.001
     simultaneous_beams: bool = False
+    park_and_hold: bool = False
 
     @classmethod
     def from_dict(cls, data: dict) -> "TrackerConfig":
@@ -425,6 +432,7 @@ class TrackerConfig:
             scan_mode=scan_mode,
             switch_time_s=switch,
             simultaneous_beams=bool(data.get("simultaneous_beams", False)),
+            park_and_hold=bool(data.get("park_and_hold", False)),
         )
 
 

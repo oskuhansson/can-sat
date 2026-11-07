@@ -125,6 +125,11 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
     signal_ok = True
     next_packet_t = timestamps[0]
     previous_t = timestamps[0]
+    # Var antennen faktiskt står. Trackern får veta det, så att låsningen
+    # jämförs med den riktning gimbalen hunnit fram till — inte med den
+    # kommenderade. Skillnaden är hela poängen med en slevgräns.
+    actual_az = scenario.tracker.park_az_deg
+    actual_el = scenario.tracker.park_el_deg
 
     for t in timestamps:
         dt = max(0.0, t - previous_t)
@@ -134,7 +139,9 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
         az_true, el_true, distance = az_el_range(station, position)
 
         # Vad trackern tror, och vart antennen faktiskt pekar.
-        command = tracker.command(t, position, signal_ok)
+        command = tracker.command(
+            t, position, signal_ok, gimbal_az_deg=actual_az, gimbal_el_deg=actual_el
+        )
         if electronic:
             # Fasstyrd array: strålen flyttas elektroniskt. Ingen svephastighet,
             # inget glapp, ingen mekanisk upplösning — men den egna
@@ -142,9 +149,21 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
             az_gimbal, el_gimbal = command.az_deg, command.el_deg
         else:
             az_gimbal, el_gimbal = gimbal.step(dt, command.az_deg, command.el_deg)
+        actual_az, actual_el = az_gimbal, el_gimbal
 
         error = pointing_error_deg(az_true, el_true, az_gimbal, el_gimbal)
-        rx_gain = pattern.gain_towards(az_true, el_true, az_gimbal, el_gimbal)
+        # Kommandoriktningen skickas separat: för hybriden är det dit den
+        # elektroniska strålen styrs, medan `az_gimbal/el_gimbal` är arrayens
+        # bredsida. Skickades bara den ena skulle arrayen peka perfekt på målet
+        # redan under svepningen — ett orakel den inte har tillgång till.
+        rx_gain = pattern.gain_towards(
+            az_true,
+            el_true,
+            az_gimbal,
+            el_gimbal,
+            command.az_deg,
+            command.el_deg,
+        )
 
         # Vägen från sändare till mottagare.
         losses = propagation.total_path_loss_db(
@@ -244,7 +263,9 @@ def _summarise(
     if not steps:
         return {}
 
-    locked = [s for s in steps if s.phase != "acquire"]
+    # Låst = trackern har en riktning att följa. "acquire", "park" och "hold" är
+    # alla tillstånd där antennen inte följer sändaren, så de räknas inte med.
+    locked = [s for s in steps if s.phase in ("gps", "rssi")]
     errors = [s.pointing_error_deg for s in steps if not math.isnan(s.pointing_error_deg)]
     locked_errors = [
         s.pointing_error_deg for s in locked if not math.isnan(s.pointing_error_deg)

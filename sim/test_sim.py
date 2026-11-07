@@ -32,6 +32,7 @@ from sim.antenna import (  # noqa: E402
 from sim.config import ConfigError, load_scenario  # noqa: E402
 from sim.engine import run  # noqa: E402
 from sim.report import to_frame  # noqa: E402
+from sim.tracker import covering_raster, raster_coverage  # noqa: E402
 
 # Samma skael som i run.py: pipeas utskriften blir a/a/o mojibake pa Windows om
 # vi inte tvingar UTF-8. En riktig konsol lamnas orord.
@@ -616,22 +617,35 @@ def main() -> int:
             f" {st['scan_time_s']:7.1f} s"
         )
 
-    # 6g. Bakatskompatibilitet: de tre ursprungliga scenarierna ska ge samma
-    #     siffror som fore arrayen. Dessa tre varden aer tagna ur baslinjen.
+    # 6g. Bakatskompatibilitet for de tre ursprungliga scenarierna.
+    #
+    #     Tva av vardena har andrats med flit, och det ar en rattelse, inte en
+    #     regression: lasningen jamfors nu med den **faktiska** gimbalriktningen
+    #     och kraver en dwell i positionen. Tidigare jamfordes den med den
+    #     *kommenderade* sveppositionen, sa gimbalen kunde "lasa" pa en riktning
+    #     den annu inte hunnit fram till — 3,2 s var tiden da *kommandot* nadde
+    #     zenit, inte da antennen gjorde det. Med 30 grader/s tar svepet fran
+    #     el=0 till el=90 tre sekunder extra, och en dwell tillkommer.
     check(
         "bakatskompatibilitet: 868 med GPS ger 2,0 s",
         close(s_868_gps["lock_time_s"], 2.0, 0.05),
         f"fick {s_868_gps['lock_time_s']:.2f} s",
     )
     check(
-        "bakatskompatibilitet: 868 utan GPS ger 3,2 s",
-        close(s_868_nogps["lock_time_s"], 3.2, 0.05),
+        "bakatskompatibilitet: 868 utan GPS ger 5,8 s (gimbalens sveptid inraknad)",
+        close(s_868_nogps["lock_time_s"], 5.8, 0.1),
         f"fick {s_868_nogps['lock_time_s']:.2f} s",
     )
     check(
-        "bakatskompatibilitet: 2,4 utan GPS ger 33,6 s",
-        close(s_24_nogps["lock_time_s"], 33.6, 0.05),
+        "bakatskompatibilitet: 2,4 utan GPS ger 35,4 s (gimbalens sveptid inraknad)",
+        close(s_24_nogps["lock_time_s"], 35.4, 0.1),
         f"fick {s_24_nogps['lock_time_s']:.2f} s",
+    )
+    _dwell_868 = run(load_scenario("scenarios/cansat_868.json"), 1).summary["scan_dwell_s"]
+    check(
+        "bakatskompatibilitet: lasningstiden ar minst en dwell",
+        s_868_nogps["lock_time_s"] >= _dwell_868 - 1e-9,
+        f"lasning {s_868_nogps['lock_time_s']:.2f} s, dwell {_dwell_868:.2f} s",
     )
     check(
         "bakatskompatibilitet: de tre scenarierna tappar inga paket",
@@ -697,14 +711,44 @@ def main() -> int:
         f"skillnad {h5 - a5:.1f} dB",
     )
 
-    # Utanfor konen: gimbalen 60 grader fel, arrayen kan bara styra 45. Resten
-    # kostar arrayfaktor, och elementet star pa 45 grader = 12*(45/65)^2 = 5,75 dB.
+    # Utanfor konen: gimbalen 60 grader fel, arrayen kan bara styra 45. Da star
+    # elementet 60 grader fran bredsidan = 12*(60/65)^2 = 10,22 dB, PLUS det
+    # kvarvarande pekfelet pa 15 grader i arrayfaktorn.
+    #
+    # Det har testet befaste tidigare en bugg: elementet utvarderades vid den
+    # KLAMDA vinkeln (45 grader) i stallet for vid observationsvinkeln (60), sa
+    # forlusten blev 5,9 dB i stallet for 10,4. Ett mal 90 grader bort fick da
+    # nastan samma forstarkning som ett pa 45 — hybriden blev orealistiskt bra.
     g60 = hyb_pat.gain_towards(0.0, 0.0, 0.0, 60.0)
     loss60 = hyb_pat.peak_gain_dbi - g60
     check(
-        "hybrid: 60 graders fel kostar ~6 dB (5,75 scanförlust + restfel)",
-        5.5 < loss60 < 6.5,
+        "hybrid: 60 graders fel kostar ~10,4 dB (elementet vid 60, inte 45)",
+        close(loss60, 10.37, 0.25),
         f"fick {loss60:.2f} dB",
+    )
+    # Och det ska rasa vidare utat: ett mal 90 grader fran bredsidan far INTE ha
+    # samma forstarkning som ett pa 45.
+    g45 = hyb_pat.gain_towards(0.0, 45.0, 0.0, 0.0)
+    g90 = hyb_pat.gain_towards(0.0, 90.0, 0.0, 0.0)
+    check(
+        "hybrid: 90 graders fel ar minst 15 dB samre an 45 graders",
+        g45 - g90 > 15.0,
+        f"45 grader {g45:.2f} dBi, 90 grader {g90:.2f} dBi, skillnad {g45 - g90:.2f} dB",
+    )
+    check(
+        "hybrid: elementforlusten vid 90 grader ar storre an 20 dB",
+        hyb_pat.peak_gain_dbi - g90 > 20.0,
+        f"fick {hyb_pat.peak_gain_dbi - g90:.2f} dB",
+    )
+    # Utan kommando styr arrayen mot malet. Med ett kommando som inte ar malet
+    # (svepning) ska pekforlusten bli storre — annars ar arrayen ett orakel som
+    # pekar ratt innan den hittat nagot.
+    g_steered = hyb_pat.gain_towards(0.0, 30.0, 0.0, 0.0, 0.0, 30.0)
+    g_sweeping = hyb_pat.gain_towards(0.0, 30.0, 0.0, 0.0, 0.0, 0.0)
+    check(
+        "hybrid: kommando skilt fran mal ger storre pekforlust (inget orakel)",
+        g_sweeping < g_steered - 1.0,
+        f"styrd {g_steered:.2f} dBi, svepande {g_sweeping:.2f} dBi",
     )
     check(
         "hybrid: ar 2D (tva riktningar kravs)",
@@ -758,6 +802,57 @@ def main() -> int:
         "hybrid: haller sig inom sin elektroniska kon",
         h_sum["outside_scan_fraction"] < 0.05,
         f"fick {100 * h_sum['outside_scan_fraction']:.1f} %",
+    )
+    # Lasningstiden far inte vara en artefakt av tidssteget: konen kan ta ett
+    # tag att svepa igenom, och innan den gjort det ar sandaren inte hittad.
+    check(
+        "hybrid: lasningstiden ar minst en dwell (inte 0,00 s)",
+        h_sum["lock_time_s"] >= h_sum["scan_dwell_s"] - 1e-9 > 0.0,
+        f"lasning {h_sum['lock_time_s']:.3f} s, dwell {h_sum['scan_dwell_s']:.3f} s",
+    )
+
+    # Rastret far inte lamna en sandare oatkomlig, oavsett max_scan. Den gamla
+    # konstruktionen (jamt utspridda rader mellan 0 och 90) lamnade 12-47 % av
+    # himlen otackt och da hittades aldrig en sandare i de riktningarna.
+    for ms in (15.0, 30.0, 45.0, 60.0):
+        ras = covering_raster(ms)
+        cov = raster_coverage(ras, ms)
+        check(
+            f"hybrid: rastret tacker himlen vid max_scan {ms:.0f} grader",
+            cov >= 0.95,
+            f"fick {100 * cov:.2f} % med {len(ras)} positioner",
+        )
+
+    # Parkeringsartefakten. I en tidigare version tvingades yagin svepa fran
+    # horisonten trots att den stod parkerad i uppskjutningsriktningen, och
+    # hybridens fordel i samsta marginal blev ~15 dB av det skalet allena. Med
+    # parkera-och-hall krymper gapet till några dB — det ar den arliga siffran.
+    y_scn = load_scenario("scenarios/cansat_24.json")
+    y_free = run(y_scn, y_scn.seed).summary["margin_min_db"]
+    y_park = run(
+        replace(y_scn, tracker=replace(y_scn.tracker, park_and_hold=True)),
+        y_scn.seed,
+    ).summary["margin_min_db"]
+    check(
+        "yagi: parkera-och-hall forbedrar samsta marginalen markant",
+        y_park - y_free > 5.0,
+        f"utan parkering {y_free:.1f} dB, med {y_park:.1f} dB",
+    )
+    def _mean_margin_min(scn, n=5) -> float:
+        vals = [run(scn, s).summary["margin_min_db"] for s in range(1, n + 1)]
+        return sum(vals) / len(vals)
+
+    y_park_avg = _mean_margin_min(
+        replace(y_scn, tracker=replace(y_scn.tracker, park_and_hold=True))
+    )
+    h_park_avg = _mean_margin_min(
+        replace(hyb_scn, tracker=replace(hyb_scn.tracker, park_and_hold=True))
+    )
+    check(
+        "hybridens fordel mot yagin ar under 5 dB med parkering (ingen artefakt)",
+        h_park_avg - y_park_avg < 5.0,
+        f"hybrid {h_park_avg:.1f} dB, yagi {y_park_avg:.1f} dB, "
+        f"gap {h_park_avg - y_park_avg:.1f} dB",
     )
 
     # ------------------------------------------------------------------

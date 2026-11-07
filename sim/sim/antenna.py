@@ -91,14 +91,33 @@ class AntennaPattern:
         el_true_deg: float,
         az_aim_deg: float,
         el_aim_deg: float,
+        az_cmd_deg: float | None = None,
+        el_cmd_deg: float | None = None,
     ) -> float:
-        """Förstärkning i den riktning sändaren faktiskt står, given var antennen pekar."""
+        """Förstärkning i den riktning sändaren faktiskt står.
+
+        `az_aim/el_aim` är var antennen **står** — för hybriden gimbalens
+        riktning, alltså arrayens bredsida. `az_cmd/el_cmd` är vad som
+        **kommenderats**: den riktning den elektroniska strålen ska styras mot.
+
+        Att de två skickas separat är hela poängen. Skulle arrayen alltid antas
+        styra mot målet blir den ett orakel — den pekar perfekt redan under
+        svepningen, innan den hittat något, och då försvinner den enda kostnaden
+        som gör en array utan gimbal dålig. Med kommandot skilt från målet syns
+        pekförlusten i stället.
+
+        Utelämnas kommandot antas strålen styra så långt den kan mot målet. Det
+        är låst läge, och det är vad enhetsproven använder.
+        """
         if self._gain_fn_2d is None:
             error = pointing_error_deg(az_true_deg, el_true_deg, az_aim_deg, el_aim_deg)
             return self.gain_dbi(error)
         u, v = direction_cosines(az_true_deg, el_true_deg)
         u0, v0 = direction_cosines(az_aim_deg, el_aim_deg)
-        return float(self._gain_fn_2d(u, v, u0, v0))
+        if az_cmd_deg is None or el_cmd_deg is None:
+            return float(self._gain_fn_2d(u, v, u0, v0))
+        uc, vc = direction_cosines(az_cmd_deg, el_cmd_deg)
+        return float(self._gain_fn_2d(u, v, u0, v0, uc, vc))
 
     def __call__(self, off_angle_deg: float) -> float:
         return self.gain_dbi(off_angle_deg)
@@ -348,7 +367,14 @@ def _array_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float],
     element_gain = _gaussian(element_cfg)
     array_gain_db = 10.0 * math.log10(nx * ny)
 
-    def gain_2d(u: float, v: float, u0: float, v0: float) -> float:
+    def gain_2d(
+        u: float,
+        v: float,
+        u0: float,
+        v0: float,
+        uc: float | None = None,
+        vc: float | None = None,
+    ) -> float:
         # zenitvinkeln: sin(zeta) = sqrt(u^2 + v^2)
         sin_zeta = min(1.0, math.hypot(u, v))
         zeta = math.degrees(math.asin(sin_zeta))
@@ -369,12 +395,15 @@ def _array_beamwidth_deg(
     sveppositioner. Här söks -3 dB-punkten fram med bisektion i bredsidesplanet,
     vilket är deterministiskt och kostar några hundra utvärderingar en gång.
     """
-    peak = gain_2d(0.0, 0.0, 0.0, 0.0)
+    peak = gain_2d(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     target = peak - 3.0
     lo, hi = 0.0, 90.0
     for _ in range(50):
         mid = 0.5 * (lo + hi)
-        if gain_2d(math.sin(math.radians(mid)), 0.0, 0.0, 0.0) > target:
+        # Kommandot sätts till bredsidan (0, 0) med flit: det är den syntetiserade
+        # loben utan elektronisk styrning som ska mätas. Låter man arrayen styra
+        # mot målet blir arrayfaktorn 1 hela vägen och då mäts bara elementets lob.
+        if gain_2d(math.sin(math.radians(mid)), 0.0, 0.0, 0.0, 0.0, 0.0) > target:
             lo = mid
         else:
             hi = mid
@@ -385,18 +414,84 @@ def _array_beamwidth_deg(
     return max(1.0, 2.0 * hi)
 
 
-def _angle_between_uv(u1: float, v1: float, u2: float, v2: float) -> float:
-    """Vinkeln mellan två riktningar givna som riktningscosinus (u, v).
+def _as_unit(u: float, v: float) -> tuple[float, float, float]:
+    """(u, v) som enhetsvektor. (u, v) är projektionen på horisontalplanet."""
+    w = math.sqrt(max(0.0, 1.0 - u * u - v * v))
+    return (u, v, w)
 
-    (u, v) är projektionen på horisontalplanet, så den tredje komponenten är
-    w = sqrt(1 - u^2 - v^2). Skalärprodukten av två enhetsvektorer ger
-    cos(vinkeln) — det är samma vinkel som geometry.pointing_error_deg räknar,
-    bara uttryckt i projektionen i stället för i az/el.
+
+def _dot(a: tuple[float, ...], b: tuple[float, ...]) -> float:
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+def _cross(a: tuple[float, ...], b: tuple[float, ...]) -> tuple[float, float, float]:
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
+
+
+def _normalize(a: tuple[float, ...]) -> tuple[float, float, float]:
+    n = math.sqrt(_dot(a, a))
+    if n < 1e-12:
+        return (0.0, 0.0, 1.0)
+    return (a[0] / n, a[1] / n, a[2] / n)
+
+
+def _angle_between(a: tuple[float, ...], b: tuple[float, ...]) -> float:
+    """Vinkeln mellan två enhetsvektorer, i grader."""
+    return math.degrees(math.acos(max(-1.0, min(1.0, _dot(a, b)))))
+
+
+def _steer_from(
+    boresight: tuple[float, float, float],
+    towards: tuple[float, float, float],
+    max_deg: float,
+) -> tuple[tuple[float, float, float], float]:
+    """Rikta strålen från `boresight` mot `towards`, högst `max_deg` grader.
+
+    Returnerar (beam, styrvinkel). Styrvinkeln är hur långt strålen faktiskt
+    flyttas — det är den som kostar elementförstärkning. Flyttas den inte alls
+    (målet utom räckhåll, eller inget kommando) blir det kvarvarande pekfelet
+    i stället synligt i arrayfaktorn.
     """
-    w1 = math.sqrt(max(0.0, 1.0 - u1 * u1 - v1 * v1))
-    w2 = math.sqrt(max(0.0, 1.0 - u2 * u2 - v2 * v2))
-    c = u1 * u2 + v1 * v2 + w1 * w2
-    return math.degrees(math.acos(max(-1.0, min(1.0, c))))
+    off = _angle_between(boresight, towards)
+    if off <= 1e-9:
+        return boresight, 0.0
+    steer = min(off, max_deg)
+    if steer <= 1e-9:
+        return boresight, 0.0
+    # Tangentiell riktning i det plan som innehåller boresight och towards.
+    proj = _dot(boresight, towards)
+    tangent = _normalize(
+        (towards[0] - boresight[0] * proj, towards[1] - boresight[1] * proj, towards[2] - boresight[2] * proj)
+    )
+    c = math.cos(math.radians(steer))
+    s = math.sin(math.radians(steer))
+    beam = _normalize(
+        (
+            boresight[0] * c + tangent[0] * s,
+            boresight[1] * c + tangent[1] * s,
+            boresight[2] * c + tangent[2] * s,
+        )
+    )
+    return beam, steer
+
+
+def _array_frame(
+    boresight: tuple[float, float, float],
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    """Ortonormerad bas (x, y) vinkelrät mot boresight — arrayens eget plan.
+
+    Arrayen sitter på gimbalen, så dess plan lutar med gimbalen. Räknar man
+    arrayfaktorn i det fasta (u, v)-planet i stället blir referensen fel så
+    fort gimbalen inte pekar rakt upp.
+    """
+    ref = (0.0, 0.0, 1.0) if abs(boresight[2]) < 0.9 else (1.0, 0.0, 0.0)
+    x_ax = _normalize(_cross(ref, boresight))
+    y_ax = _cross(boresight, x_ax)
+    return x_ax, y_ax
 
 
 @register_model("hybrid")
@@ -415,7 +510,7 @@ def _hybrid(cfg: AntennaConfig) -> Callable[[float], float]:
     return gain
 
 
-def _hybrid_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float], float]:
+def _hybrid_gain_2d(cfg: AntennaConfig) -> Callable[..., float]:
     """Array **på** gimbal: gimbalen grovpekar, arrayen finjusterar elektroniskt.
 
     Det här är den arkitektur projektet ursprungligen planerade, och den skiljer
@@ -423,15 +518,19 @@ def _hybrid_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float]
 
     1. **Bredsidan är gimbalens riktning.** Arrayen sitter monterad på gimbalen,
        så dess bredsida pekar dit gimbalen pekar. Elementmönstret utvärderas
-       därför vid **styrvinkeln** — avvikelsen mellan bredsidan och strålen —
-       inte vid den absoluta vinkeln från en fast bredsida. Utan det här steget
-       ärver hybriden array-only-modellens katastrof mot horisonten.
+       därför vid vinkeln mellan **målet och bredsidan** — inte vid styrvinkeln.
+       Skillnaden är avgörande utanför konen: ett mål 90 grader från bredsidan
+       ska ha elementets nollnivå, inte samma förstärkning som ett på 45.
     2. **Styrningen är begränsad till ±max_scan_deg.** Utanför konen klämmer
        arrayen vid gränsen, och resten av felet kostar arrayfaktor. Det är
        gimbalens jobb att se till att den aldrig behöver klämma länge.
-    3. **Scanförlusten är priset för den elektroniska styrningen.**
-       Elementförstärkningen vid styrvinkeln theta är 12*(theta/65)^2 dB under
-       toppen: 5,8 dB vid ±45 grader. Därför ska gimbalen följa så att
+    3. **Kommandot är skilt från målet.** Under svepningen vet antennen inte var
+       sändaren är. Skickas ingen kommandoriktning antas strålen styra mot målet
+       — det är låst läge. Motorn skickar alltid den faktiska kommandoriktningen,
+       så att arrayen inte blir ett orakel som pekar perfekt innan den hittat något.
+    4. **Scanförlusten är priset för den elektroniska styrningen.**
+       Elementförstärkningen vid vinkeln från bredsidan är 12*(theta/65)^2 dB
+       under toppen: 5,8 dB vid ±45 grader. Därför ska gimbalen följa så att
        styrvinkeln hålls liten — och därför är hybriden ingen gratis lunch.
     """
     nx, ny = cfg.array_nx, cfg.array_ny
@@ -454,20 +553,46 @@ def _hybrid_gain_2d(cfg: AntennaConfig) -> Callable[[float, float, float, float]
     )
     element_gain = _gaussian(element_cfg)
 
-    def gain_2d(u: float, v: float, u0: float, v0: float) -> float:
-        theta_abs = _angle_between_uv(u, v, u0, v0)
-        theta_steer = min(theta_abs, max_scan)
+    def gain_2d(
+        u: float,
+        v: float,
+        u0: float,
+        v0: float,
+        uc: float | None = None,
+        vc: float | None = None,
+    ) -> float:
+        target = _as_unit(u, v)
+        boresight = _as_unit(u0, v0)
 
-        # Elementet ser styrvinkeln, inte den absoluta vinkeln.
-        elem = element_gain(theta_steer)
+        # Elementet ser vinkeln mellan målet och **bredsidan**, inte styrvinkeln.
+        # Det är den här raden som gör att förstärkningen rasar när målet ligger
+        # utanför konen. Klipper man argumentet till max_scan i stället får ett
+        # mål 90 grader bort samma förstärkning som ett på 45 — en artifakt.
+        theta_ep = _angle_between(target, boresight)
 
-        # Arrayfaktorn: styrd mot theta_steer, utvärderad vid theta_abs. Är
-        # målet inom konen blir restfelet noll och AF = 1. Är det utanför blir
-        # AF den dämpning som gimbalen ännu inte har hunnit ta bort.
-        u_steer = math.sin(math.radians(theta_steer))
-        u_targ = math.sin(math.radians(theta_abs))
-        af = array_factor(nx, ny, spacing, u_targ, 0.0, u_steer, 0.0, cfg.phase_bits)
-        return elem + array_gain_db + 20.0 * math.log10(max(af, 1e-6))
+        if uc is None or vc is None:
+            # Inget kommando: arrayen styr så långt den kan mot målet. Det är
+            # låst läge, och det enhetsproven använder.
+            beam, _ = _steer_from(boresight, target, max_scan)
+        else:
+            command = _as_unit(uc, vc)
+            beam, _ = _steer_from(boresight, command, max_scan)
+
+        # Arrayfaktorn räknas i arrayens eget plan, som lutar med gimbalen.
+        # Utan det steget blir (u, v) fel referens så fort gimbalen inte pekar
+        # rakt upp.
+        x_ax, y_ax = _array_frame(boresight)
+        af = array_factor(
+            nx,
+            ny,
+            spacing,
+            _dot(target, x_ax),
+            _dot(target, y_ax),
+            _dot(beam, x_ax),
+            _dot(beam, y_ax),
+            cfg.phase_bits,
+        )
+        return element_gain(theta_ep) + array_gain_db + 20.0 * math.log10(max(af, 1e-6))
 
     return gain_2d
 
