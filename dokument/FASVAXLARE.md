@@ -207,7 +207,7 @@ handklippta koaxialkablar.
 
 ---
 
-### 7. Källor
+### 7. Källor (868 MHz)
 
 - [Analog Devices — HMC928LP5E / HMC929 / HMC936 lansering (fasväxlare, frekvenser)](https://www.microwavejournal.com/articles/16352-hmc928lp5e-hmc929lp4e-hmc936lp6e-mmic-phase-shifters)
 - [Analog Devices — HMC936A datablad (1,2–1,4 GHz, 6-bit)](https://www.analog.com/en/products/hmc936a.html)
@@ -370,7 +370,7 @@ förlust, integrerad drivare, och 2,4 GHz ligger bekvämt inne i bandet.
 
 ---
 
-### 7. Källor
+### 7. Källor (2,4 GHz)
 
 - [MACOM MAPS-010144 — 4-bit, 2,3–3,8 GHz (datablad)](https://cdn.macom.com/datasheets/MAPS-010144.pdf)
 - [MACOM MAPS-010144 — produktsida/specifikation](https://www.macom.com/products/product-detail/MAPS-010144)
@@ -386,3 +386,11 @@ förlust, integrerad drivare, och 2,4 GHz ligger bekvämt inne i bandet.
 *Levande dokument. Verifiera pris och lagerstatus hos Digi-Key/Mouser innan köp — de
 flesta av dessa kretsar har 10–26 veckors ledtid.*
 
+---
+
+## Se även
+
+- [BEAMFORMING.md](BEAMFORMING.md) — teorin bakom fasväxlarna
+- [PROTOKOLL.md](PROTOKOLL.md) — 2,4 GHz vs 868 MHz-valet som styr komponentvalet
+- [KOSTNADER.md](KOSTNADER.md) — budgetposten de ska rymmas i
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — vad markantennen ska åstadkomma

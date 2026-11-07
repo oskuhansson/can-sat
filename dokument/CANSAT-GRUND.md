@@ -134,7 +134,7 @@ denna fil. Kortversion:
   snabbt extraben (telemetri + sporadiska bilder), sämre som enda lösning.
   Både ESP-NOW och LoRa här är **anslutningslös broadcast** — inget fragilt handshake.
 
-**Vår valda arkitektur (se [WIFI-FORSKNING.md §7](KOMMUNIKATION.md)):**
+**Vår valda arkitektur (se [KOMMUNIKATION.md §7](KOMMUNIKATION.md)):**
 - **ESP-NOW broadcast (2,4 GHz)** för GPS + telemetri + RSSI + sporadiska bilder.
 - **LoRa-monopol (868 MHz)** som robust backup-redundans över hela nedfärden.
 - Båda benen sänder **enkelriktat** → mark-RX:n på en gimbal följer burken via
@@ -173,3 +173,14 @@ denna fil. Kortversion:
 
 *Det här är en levande översikt — uppdateras vartefter regler verifieras och designen
 utvecklas. Verifiera de officiella datumen/siffrorna med ESERO Finland inför tävlingen.*
+
+---
+
+## Se även
+
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — hur vår radio fungerar
+- [RADIOTEKNIK.md](RADIOTEKNIK.md) — radio-grunder för nybörjare
+- [GIMBAL.md](GIMBAL.md) — markstationen
+- [MUONDETEKTOR.md](MUONDETEKTOR.md) — sekundärmissionen
+- [KOSTNADER.md](KOSTNADER.md) — budgeten
+- [QA.md](QA.md) — testa dig på reglerna (Del A)

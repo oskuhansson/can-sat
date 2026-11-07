@@ -83,7 +83,7 @@ enkel monopol (omni)                     hög-gain-antenn på gimbal
 **Varför:** allt som är svårt (förstärkning, pekning, mekanik) hamnar på marken där det
 inte finns massa-, volym- eller effektgränser. Burken förblir minimal och tål 30 G.
 
-**Nyckeltal:** 868 MHz LoRa ger ~60–75 dB länkmarginal. 2,4 GHz ger ~20 dB vid max
+**Nyckeltal:** 868 MHz LoRa ger ~60–80 dB länkmarginal. 2,4 GHz ger ~20 dB vid max
 datahastighet — men **ingen duty-cycle-gräns** (mot 1 % på 868 MHz).
 
 ---
@@ -101,7 +101,7 @@ datahastighet — men **ingen duty-cycle-gräns** (mot 1 % på 868 MHz).
 
 ## Status
 
-- [x] Forskning: monopol i burken + markgimbal — 60–75 dB marginal på 868 MHz
+- [x] Forskning: monopol i burken + markgimbal — 60–80 dB marginal på 868 MHz
 - [x] Forskning: anslutningslös dubbel — ESP-NOW/LoRa broadcast (KOMMUNIKATION, avsnitt 7)
 - [x] Forskning: protokollval och priser (PROTOKOLL)
 - [x] Forskning: polarisation och mönsternolla (KOMMUNIKATION, del 3)

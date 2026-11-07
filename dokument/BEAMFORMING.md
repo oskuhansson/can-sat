@@ -330,16 +330,41 @@ V_{\text{summa}} = NV
 P \propto N^{2}V^{2}
 $$
 
-Den koherenta vinsten:
+Den koherenta vinsten (jämfört med **ett** element):
 
 $$
-G_{\text{coh}} = 10\log_{10}\!\left(N^{2}\right) = 20\log_{10}N \ \text{dB}
+G_{\text{coh}} = 10\log_{10}N \ \text{dB}
 $$
 
-dvs. $+6$ dB för $N=4$, $+9$ dB för $N=8$ (utöver enkelantennens egen gain).
+dvs. $+6$ dB för $N=4$ och $+9$ dB för $N=8$, utöver det enskilda elementets egen gain.
+
+**Härledning — varför $10\log_{10}N$ och inte $20\log_{10}N$:** med *oberoende* brus i varje
+kanal (eget LNA per element) adderar signalerna koherent men bruset okorrelerat:
+
+$$
+\text{SNR}_{\text{ut}}
+= \frac{(NV_s)^2}{N\,V_n^2}
+= N\cdot\frac{V_s^2}{V_n^2}
+\;\;\Rightarrow\;\;
+G = N
+\;\;\Rightarrow\;\;
+10\log_{10}N
+$$
+
+Samma resultat ger apertur-resonemanget: $N$ element ger $N$ gånger så stor effektiv
+apertur, och direktiviteten skalar med aperturen.
+
+> ⚠️ **$20\log_{10}N$ dyker upp först när total uteffekt också ökar $N$ gånger** (t.ex. en
+> *sändar*-array där varje element matas med samma effekt som referensen). Det är inte
+> fallet för vår mottagararray. Använd $10\log_{10}N$ i länkbudgeten.
 
 **Utan koherens** (egen oscillator per kanal) blir fasfelen slumpmässiga och den
 förväntade summan bara $\sqrt{N}\,V$ — ingen arrayvinst.
+
+> **Verkligheten ger mindre än $10\log_{10}N$.** Vid $\lambda/2$-avstånd överlappar
+> elementens effektiva aperturer ($A_e = G\lambda^2/4\pi$), och ömsesidig koppling
+> förvränger mönstret. Med 4 riktade element är $+6$ dB därför ett **övre gränsvärde**;
+> räkna realistiskt med $+3\ldots+5$ dB.
 
 ---
 
@@ -522,3 +547,11 @@ $$
 *Levande dokument. Utöka med härledningar när ni väljer metod. Se även
 del 1 i denna fil för hårdvara och kostnader per metod.*
 
+---
+
+## Se även
+
+- [FASVAXLARE.md](FASVAXLARE.md) — konkreta fasväxlare för 868 MHz och 2,4 GHz
+- [PROTOKOLL.md](PROTOKOLL.md) — vilket band och protokoll arrayen ska byggas för
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — länkbudgeten som arrayen ska förbättra
+- [GIMBAL.md](GIMBAL.md) — mekanisk pekning, alternativet till elektronisk

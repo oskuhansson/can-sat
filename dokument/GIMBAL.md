@@ -26,7 +26,7 @@ Gimbalen ska hålla en **yagi-antenn (12–15 dBi)** och vinkla den i **två axl
 
 | Krav | Värde | Källa |
 |---|---|---|
-| Antenn | yagi 12–15 dBi, ~0,3–1 kg | WIFI §6 |
+| Antenn | yagi 12–15 dBi, ~0,3–1 kg | KOMMUNIKATION §6 |
 | Axlar | 2 (azimut + elevation) | §5.3 |
 | Vinkelhastighet | bara några °/s (8–11 m/s fall) | §5.3 |
 | Uppdatering | 1–5 Hz styring (GPS/RSSI) | §5.3 |
@@ -698,3 +698,12 @@ Funktionen `Gimbal CAD Plan V2` i `Feature Studio 1` har två parametrar:
 
 Regenereringstatus i Onshape: **OK**, 0 fel, 0 namnlösa kroppar.
 
+---
+
+## Se även
+
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — gimbalkraven (§5.3) och markantennvalet (§6)
+- [BEAMFORMING.md](BEAMFORMING.md) — elektronisk strålstyrning som alternativ
+- [KOSTNADER.md](KOSTNADER.md) — gimbalens budgetpost
+- [cad/GimbalCADv2.fs](../cad/GimbalCADv2.fs) — FeatureScript-modellen
+- [bilder/](../bilder) — renderingar av modellen

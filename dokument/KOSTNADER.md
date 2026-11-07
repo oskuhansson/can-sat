@@ -77,7 +77,7 @@ faktura innan [Pre-Launch Report 20.2.2027](CANSAT-GRUND.md).*
 
 *Sammanställd 2026-11-03. Budgetkrav från tävlingen: **≤ 500 € totalt**. Siffrorna är
 typiska EU-priser (exkl. frakt) och får justeras mot faktura/leverantör. Se
-[WIFI-FORSKNING.md §7](KOMMUNIKATION.md) för massbaksidan och husmonopol-detajjer.*
+[KOMMUNIKATION.md §7](KOMMUNIKATION.md) för massbaksidan och husmonopol-detajjer.*
 
 ---
 
@@ -209,7 +209,7 @@ WiFi-station/livevideo; för vår ESP-NOW + LoRa-lösning räcker ESP32.*
 
 ---
 
-*Se även [WIFI-FORSKNING.md §7](KOMMUNIKATION.md) (massbudget) och
+*Se även [KOMMUNIKATION.md §7](KOMMUNIKATION.md) (massbudget) och
 [QA.md Del B](QA.md) (verifiering av siffror). Uppdatera mot faktiska inköp.*
 
 ---
@@ -261,5 +261,5 @@ frakt/moms. Uppdatera mot faktura.*
 
 *Obs: mark-RX-förstärkning är laglig och oreglerad (ingen sändareffekt krävs), så
 antennens pris bestämmer bara hur mycket link-marginal man får — en 12–15 dBi-yagi i
-15–50 €-klassen räcker gott för vår lösning ([WIFI-FORSKNING.md §5.2](KOMMUNIKATION.md)).*
+15–50 €-klassen räcker gott för vår lösning ([KOMMUNIKATION.md §5.2](KOMMUNIKATION.md)).*
 

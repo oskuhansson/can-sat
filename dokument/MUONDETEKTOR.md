@@ -128,7 +128,7 @@ När en muon passerar scintillatorn exciterar den molekyler som sedan sänder ut
   muoner passerar flest ytor.
 
 > ⚠️ Återanvänd **inte** den gamla cloud-chamber-massan rakt av — räkna om mass/
-> ström/plats-budgeten (se FORSKNING.md arkiv).
+> ström/plats-budgeten (se [arkiv/CLOUD-CHAMBER.md](../arkiv/CLOUD-CHAMBER.md)).
 
 #### 4.4 Verifiering och "vetenskapligt" uppdrag
 
@@ -177,7 +177,7 @@ När en muon passerar scintillatorn exciterar den molekyler som sedan sänder ut
 4. **Diskriminatortröskel:** hur skiljer vi muonpulser från bakgrundsbrus (elektronik,
    kärn/andra strålning)?
 5. **Integration med radio:** räkna lokalt på ESP32 och sänd summering via
-   ESP-NOW/LoRa-nedlänk (§7 i WIFI-FORSKNING.md).
+   ESP-NOW/LoRa-nedlänk (§7 i KOMMUNIKATION.md).
 
 ---
 
@@ -297,3 +297,11 @@ med max ljuskänslighet och accepterar högspänning + förstärkningsreglering.
 *Se även del 1 i denna fil §4 (konstruktion) och
 del 1 i denna fil för hur ni svarar på kritik.*
 
+---
+
+## Se även
+
+- [CANSAT-GRUND.md](CANSAT-GRUND.md) — ramarna: massa, volym, 30 G, mättid
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — nedlänken som skickar räknedatan
+- [KOSTNADER.md](KOSTNADER.md) — sekundärmissionens budgetpost
+- [arkiv/CLOUD-CHAMBER.md](../arkiv/CLOUD-CHAMBER.md) — det övergivna alternativet

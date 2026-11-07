@@ -116,7 +116,7 @@ representera data över en bred bandbredd:
 - **Bandbredd (BW):** bredare = snabbare men mindre känslig; 125/250/500 kHz.
 
 Praktiskt för er burk: vill ni ha **maximal räckvidd**, kör SF12/BW125 (långsamt men
-75+ dB link-marginal, §5.2). Vill ni skicka **mer GPS/telemetri-data**, kör SF7–SF9.
+80 dB link-marginal, §5.2). Vill ni skicka **mer GPS/telemetri-data**, kör SF7–SF9.
 
 ### c) WiFi — OFDM
 WiFi (802.11) använder **OFDM/QAM** — många delbärare, hög datatakt. Perfekt för stora
@@ -166,8 +166,17 @@ SNR-tröskel och därför mycket längre räckvidd. (Det som gör att EQ-NOW har
 
 **Rekommendation:** kör **868 MHz LoRa (CSS, SF7–SF12)** i burken + 12–23 dBi markantenn.
 ESP-NOW/WiFi är utmärkta för prototypning på kort avstånd, men för den faktiska
-nedlänken på ~1+ km vinner LoRa med hela link-marginalen (60–75 dB, §5.2).
+nedlänken på ~1+ km vinner LoRa med hela link-marginalen (60–80 dB, §5.2).
 
 Ett praktiskt sätt att se skillnaden live: prova att skicka samma paket på WiFi (ESP-NOW)
 och på LoRa från balkongen — WiFi tappar signalen efter några tiotals meter,
 LoRa når hundratals meter–kilometrar vid låg SF.
+
+---
+
+## Se även
+
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — där begreppen används i praktiken (§3 och §5.2)
+- [PROTOKOLL.md](PROTOKOLL.md) — moduleringsvalen i detalj
+- [BEAMFORMING.md](BEAMFORMING.md) — när man går från en antenn till flera
+- [QA.md](QA.md) — testa om du förstått begreppen (Del A)

@@ -26,7 +26,7 @@ WiFi-hotspot/relä-undersökning — de delarna är arkiverade i
 - **Designen i korthet:** **§5** (fokuserad design: monopol + markgimbal), **§6**
   (mark-RX-antennval), **§6.1** (dish + GPS) och **§7** (anslutningslös dubbel:
   ESP-NOW broadcast + LoRa-backup).
-- **Länkbudget:** 868 MHz LoRa ger 60–75 dB marginal över nedfärden (§5.2);
+- **Länkbudget:** 868 MHz LoRa ger 60–80 dB marginal över nedfärden (§5.2);
   2,4 GHz ~25–30 dB.
 - **Regler:** nedlänk (och upplänk) är licensfria i Finland om utrustningen är CE-godkänd
   och håller sig inom effekt-/sändningstidsgränserna (§2). RX-gain på marken är oreglerad.
@@ -184,11 +184,11 @@ burken förblir minimal och robust.*
   20–30 G + rotation under fallskärm utan att tappa kontakten (en riktad antenn skulle
   förlora signalen vid burkens rotation).
 - **High-gain på marken.** En 12–23 dBi-yagi/patch på marken har **ingen storleks-,
-  vikt- eller effektbegränsning** och ingen lagbunden RX-gräns (RX-gain är fri, §7.8).
+  vikt- eller effektbegränsning** och ingen lagbunden RX-gräns (RX-gain är fri, §3).
   Med 23 dBi får man ~100× mottagarkänslighet jämfört med en enkel stav — det är
   *marken* som gör den tunga lyftkraften.
 - **Gimbal på marken.** Där burkgimbalen (pan-tilt i 66 mm-burk + servon som ska klara
-  20 G + rotation) var det svåraste i §5, är **markgimbalen trivial**: den står på ett
+  20 G + rotation) var det svåraste i arkivets §5, är **markgimbalen trivial**: den står på ett
   stativ, drivs av vanliga hobby-servon/steppers och får väga hur mycket som helst. Den
   behöver bara rotera två axlar (azimut + elevation) för att följa burken.
 
@@ -202,22 +202,30 @@ burken förblir minimal och robust.*
 
 **Nedlänk-budget med burkens monopol (0–2 dBi) som sändare:**
 
-| Steg | 868 MHz | 2,4 GHz |
+| Steg | 868 MHz (LoRa) | 2,4 GHz (WiFi) |
 |---|---|---|
-| EIRP (max laglig) | 14 dBm (25 mW e.r.p.) | 20 dBm (100 mW EIRP) |
-| Monopol-gain (ingår i EIRP) | ~0–2 dBi | ~0–2 dBi |
-| FSPL vid ~1,5 km slantavstånd | ~85 dB | ~103 dB |
-| Markantenn 23 dBi | +23 dBi | +23 dBi |
-| **Mottaget på marken** | **~−62 dBm** | **~−60 dBm** |
-| Känslighet (LoRa/WiFi) | −120…−137 dBm | −85…−90 dBm |
-| **Marginal** | **~60–75 dB** | **~25–30 dB** |
+| EIRP (max laglig) | **+16 dBm** (25 mW e.r.p.) | **+20 dBm** (100 mW EIRP) |
+| FSPL vid 1,5 km slantavstånd | **−94,7 dB** | **−103,6 dB** |
+| Markantenn 15 dBi (yagi, default) | +15 dBi | +15 dBi |
+| Markantenn 23 dBi (dish) | +23 dBi | +23 dBi |
+| **Mottaget, 15 dBi-yagi** | **~−64 dBm** | **~−69 dBm** |
+| **Mottaget, 23 dBi** | **~−56 dBm** | **~−61 dBm** |
+| Känslighet | −120…−137 dBm (LoRa) | −85…−90 dBm (WiFi) |
+| **Marginal, 15 dBi** | **~56–73 dB** | **~16–21 dB** |
+| **Marginal, 23 dBi** | **~64–81 dB** | **~24–29 dB** |
 
-(Kalkylformler: §2 och [rftools](https://rftools.io/calculators/rf/rf-link-budget/).)
+FSPL räknas som $32{,}44 + 20\log_{10}(f_{\text{MHz}}) + 20\log_{10}(d_{\text{km}})$
+(se [rftools](https://rftools.io/calculators/rf/rf-link-budget/)).
 
-→ Med monopolburk + 23 dBi-markantenn på 868 MHz finns **60–75 dB marginal över hela
-nedfärden** — man kan till och med sänka effekten eller använda mindre antenn. På
-2,4 GHz är marginalen ~25–30 dB, fortfarande robust. **Rekommendation: 868 MHz (LoRa)**
-— störst marginal och enklast laglig effekt (25 mW e.r.p., §7.7).
+> **Rättelse 2026-11-07:** en tidigare version angav FSPL **85 dB** för 868 MHz vid 1,5 km.
+> Det var ~10 dB för lågt — korrekt värde är **94,7 dB**. Tabellen och marginalerna är
+> omräknade. Slutsatsen står kvar: länken är rejält överdimensionerad.
+
+→ Med monopolburk + **15 dBi-yagi** på 868 MHz finns **~56–73 dB marginal** över hela
+nedfärden (mer med dish eller högre SF) — man kan till och med sänka effekten eller
+använda mindre antenn. På 2,4 GHz med **WiFi-känslighet** är marginalen ~16–29 dB,
+fortfarande robust. **Med LoRa 2,4 (SX1280, −132 dBm) blir den ~60 dB** — se
+[PROTOKOLL.md](PROTOKOLL.md).
 
 #### 5.3 Gimbalkrav och pekprecision
 
@@ -240,10 +248,10 @@ nedfärden** — man kan till och med sänka effekten eller använda mindre ante
 
 1. **Robusthet först:** monopol i burken = inget som kan peka fel, klara 20–30 G och
    rotation; all komplexitet ligger i markens gimbal som är enkel att bygga/testa hemma.
-2. **Laglighet enkel:** nedlänk-only (beacon) med fri RX-gain på marken (§7.7); ingen
+2. **Laglighet enkel:** nedlänk-only (beacon) med fri RX-gain på marken (§2); ingen
    upplänk krävs (men den är laglig om ni vill testa senare).
 3. **Plats för sensorer i burken:** monopolen tar minimal plats (en tråd/pinne) → gott
-   om plats för elektronik/sensorer (§7).
+   om plats för elektronik/sensorer (arkivets §7).
 4. **Mätbar vetenskap:** logga RSSI över tid från gimbalens mottagare + GPS-position i
    telemetrin → beräkna fri-rums-förlust, verifiera antennförstärkningen, visa när
    mottagningen var bäst — ett riktigt "downlink-tracking"-uppdrag.
@@ -255,7 +263,7 @@ nedfärden** — man kan till och med sänka effekten eller använda mindre ante
 - **Inte ett "relä mellan två punkter"** — det är en enkelriktad mottagning i en marken
   (eller flera mottagarstationer utan reläfunktion).
 - **Flera markstationers värde sjunker:** en gimbal pekar på burken åt gången; "två
-  stationer pratar genom satelliten" faller bort (kräver upplänk, §7.6/§7.7).
+  stationer pratar genom satelliten" faller bort (kräver upplänk, §1/§2).
 - **Fallskärmssvängning:** burken gungar/roterar, men eftersom monopolen är omni spelar
   det ingen roll för sändningen — enda följden är att RSSI varierar lite.
 - **868 MHz-yagi är en meterklass** (element ~30–80 cm) — inget problem på marken, men
@@ -346,7 +354,7 @@ Men för **GPS, telemetri, RSSI och sporadiska bilder** är det perfekt.
  Burken
    ├─ ESP-NOW (2,4 GHz, broadcast-mark-RX): GPS + telemetri + RSSI + sporadiska bilder
    └─ LoRa (868 MHz, monopol): GPS + nödtelemetri som robust redundancy HELA nedfärden
-                                  (ingen tvåvägslänk alls, tåligast, 60–75 dB marginal §5.2)
+                                  (ingen tvåvägslänk alls, tåligast, 60–80 dB marginal §5.2)
 
  Marken
    ├─ mark-RX (yagi 12–15 dBi / medeldish on gimbal) ← ESP-NOW-benet
@@ -361,11 +369,11 @@ Men för **GPS, telemetri, RSSI och sporadiska bilder** är det perfekt.
   nödtelemetri över hela nedfärden även om 2,4 GHz-bredbenet störs (trångt band).
 - **Gimbal-pekning funkar oavsett ben:** RSSI-peak från ESP-NOW *eller* GPS från LoRa ger
   elev/azimut — bägge pekar samma burk.
-- **Lagligt:** 2,4 GHz 20 dBm EIRP (§7.7) + 868 MHz 25 mW e.r.p. (duty ≤1 %) — bägge
+- **Lagligt:** 2,4 GHz 20 dBm EIRP (§2) + 868 MHz 25 mW e.r.p. (duty ≤1 %) — bägge
   licensfria, ingen upplänk krävs.
 
 **Att tänka på:**
-- Två radiosystem i burken = mest plats/ström (men har gott om budget, §7).
+- Två radiosystem i burken = mest plats/ström (men har gott om budget, arkivets §7).
 - 2,4 GHz-bandet är trångt (interferens) → ESP-NOW-benet är inte lika tåligt som LoRa på
   långa avstånd. Därför är LoRa **backupen/systemets "sanning"** och ESP-NOW det snabba
   extrabenet.
@@ -406,7 +414,7 @@ burken förblir liten, enkel och robust.
   är helt laglig och kostar ingen effekt.
 - **Gimbalen står på ett stativ** — lätt att bygga och testa hemma, ingen storlek/tyngd-
   begränsning som i burken.
-- **Robust marginal:** ~60–75 dB på 868 MHz över hela nedfärden.
+- **Robust marginal:** ~60–80 dB på 868 MHz över hela nedfärden.
 
 ---
 
@@ -621,7 +629,7 @@ $$
 
 Med 1 km höjd och 500 m drift blir infallsvinkeln $\arctan(1000/500) = 63°$ från
 horisontalplanet → bara ~27° från vertikalen i monopoltermer → **~−7 dB**. Och med
-60–75 dB systemmarginal (868 MHz) eller 23 dB (2,4 GHz vid 254 kb/s) är det **helt
+60–80 dB systemmarginal (868 MHz) eller 23 dB (2,4 GHz vid 254 kb/s) är det **helt
 absorberat**.
 
 #### 5.3 Åtgärder mot nollan
@@ -666,7 +674,7 @@ undviker nollan — utan att kosta något.
 
 ### 8. Källor och vidare läsning
 
-- denna fil — §5 (monopol i burken), §7.8 (antennbegrepp)
+- denna fil — §5 (monopol i burken), §3 (antennbegrepp)
 - [PROTOKOLL.md](PROTOKOLL.md) — länkbudgetar för 2,4 GHz vs 868 MHz
 - del 1 i denna fil — PE4259-switchen för polarisationsval
 - Balanis, *Antenna Theory* — kapitel om monopol, jordplan, polarisation
@@ -694,3 +702,15 @@ när prototypen finns.*
 - [The Things Network, "Duty cycle" (sändningstid per timme)](https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/)
 - [Traficom, "Radioamatööritoiminnan pätevyydet ja taajuudet" (amatörradio kräver tillstånd — ej samma sak)](https://traficom.fi/fi/radioluvat-ja-taajuudet/radiotaajuuksien-kaytto/radioamatooritoiminnan-patevyydet-ja-taajuudet)
 - [MathWorks, "DVB-S2 bent pipe simulation" (relä-länk, koncept)](https://www.mathworks.com/help/satcom/ug/dvbs2-bent-pipe-simulation-with-rf-impairments-and-corrections.html)
+
+---
+
+## Se även
+
+- [PROTOKOLL.md](PROTOKOLL.md) — vilket protokoll och band som ger bäst tillförlitlighet + bandbredd
+- [BEAMFORMING.md](BEAMFORMING.md) — elektronisk strålstyrning (teori, matematik, hårdvara)
+- [FASVAXLARE.md](FASVAXLARE.md) — fasväxlarna en array kräver
+- [GIMBAL.md](GIMBAL.md) — markgimbalens byggplan och CAD
+- [KOSTNADER.md](KOSTNADER.md) — vad designen kostar
+- [RADIOTEKNIK.md](RADIOTEKNIK.md) — begreppen om du är ny
+- [MUONDETEKTOR.md](MUONDETEKTOR.md) — sekundärmissionen som använder nedlänken

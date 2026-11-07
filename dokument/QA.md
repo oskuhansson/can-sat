@@ -20,11 +20,11 @@ och denna fil. **Del B** är en kvalitetsverifiering
 
 ---
 
-# Del A — Kunskapsquiz (frågor & svar)
+### Del A — Kunskapsquiz (frågor & svar)
 
 *Svara först utan att kika på svaren. Facit står i slutet av varje fråga.*
 
-### A.1 CanSat i allmänhet
+#### A.1 CanSat i allmänhet
 
 **1. Vad står CanSat för och varför kallas den "satellit" när den inte är i omloppsbana?**
 > *Svar:* CanSat = "Can" + "Sat" (burk + satellit). Den byggs som en riktig minisatellit
@@ -46,7 +46,7 @@ och denna fil. **Del B** är en kvalitetsverifiering
 > *Svar:* Kravet är 20 G, men verklig uppmätt acceleration i Vasa har nått ~30 G → bygg
 > för 30 G.
 
-### A.2 Regler
+#### A.2 Regler
 
 **6. Vad är "4,5 cm-locket" och varför spelar det roll för antennerna?**
 > *Svar:* Det axiala utrymmet i raketen ovanför burken är bara **4,5 cm** (fallskärm +
@@ -71,7 +71,7 @@ och denna fil. **Del B** är en kvalitetsverifiering
 > verifiera med ESERO Finland att laget hann med, annars är sista möjlighet
 > projektrepresentationen 11.12.2026.
 
-### A.3 Moduler och bygge
+#### A.3 Moduler och bygge
 
 **11. Vilken mission är obligatorisk i en CanSat?**
 > *Svar:* Primärmissionen: mäta **temperatur och lufttryck** → beräkna höjd med
@@ -85,7 +85,7 @@ och denna fil. **Del B** är en kvalitetsverifiering
 > *Svar:* Säkerhetskrav — man ska snabbt kunna stänga av systemet (t.ex. före/nach
 > hantering, landning).
 
-### A.4 Radio och mark-RX
+#### A.4 Radio och mark-RX
 
 **14. Vad är skillnaden mellan upplänk och nedlänk?**
 > *Svar:* **Nedlänk** = burken → marken. **Upplänk** = marken → burken.
@@ -123,16 +123,16 @@ och denna fil. **Del B** är en kvalitetsverifiering
 > som är lätt att rikta mot burken.
 
 **22. Ungefär hur stor link-marginal ger 868 MHz-systemet över nedfärden?**
-> *Svar:* **~60–75 dB** — mycket robust.
+> *Svar:* **~60–80 dB** — mycket robust.
 
 ---
 
-# Del B — Kvalitetssäkring / faktakontroll inför tävlingen
+### Del B — Kvalitetssäkring / faktakontroll inför tävlingen
 
 *Kontrollera följande mot de officiella källorna (ESERO Finland, Traficom) innan PLR
 skickas in. Markera friska/för att åtgärda.*
 
-### B.1 Hårddata att verifiera (head → ESERO Finland)
+#### B.1 Hårddata att verifiera (head → ESERO Finland)
 
 | # | Punkt | Värde i översikterna | Verifieringsdatum | Status |
 |---|---|---|---|---|
@@ -147,7 +147,7 @@ skickas in. Markera friska/för att åtgärda.*
 | 9 | Apogeum | 750 m (2026) / 900–1100 m (2024–25) |  |  |
 | 10 | Poängviktning | Teknik 35 / Vet 30 / Proffskompetenser 25 / Outreach 10 |  |  |
 
-### B.2 Datum att bekräfta
+#### B.2 Datum att bekräfta
 
 | # | Milstolpe | Datum | Verifierat? |
 |---|---|---|---|
@@ -157,7 +157,7 @@ skickas in. Markera friska/för att åtgärda.*
 | 4 | Pre-Launch Report (max 15 sidor, eng.) | 20.2.2027 |  |
 | 5 | Tävling | 11–14.3.2027 (Vasa) |  |
 
-### B.3 Regler/radio att dubbelkolla (→ Traficom / ESERO)
+#### B.3 Regler/radio att dubbelkolla (→ Traficom / ESERO)
 
 - [ ] 868 MHz LoRa: **25 mW e.r.p.**, duty ≤1 % — bekräfta aktuell määräys.
 - [ ] 2,4 GHz (ESP-NOW/WLAN): **20 dBm EIRP** — licensfritt, luftanvändning tillåten.
@@ -165,12 +165,12 @@ skickas in. Markera friska/för att åtgärda.*
 - [ ] CE-märkta moduler — inga förstärkare får kopplas mellan sändare och antenn.
 - [ ] Både upplänk och nedlänk är licensfria om utrustningen håller sig inom gränserna.
 
-### B.4 Innehållskontroll av översikterna
+#### B.4 Innehållskontroll av översikterna
 
 - [ ] CANSAT-GRUND.md: siffror och datum stämmer med officiella krav.
 - [ ] KOMMUNIKATION.md (del 2): arkitektur (ESP-NOW + LoRa, yagi+gimbal) speglar
-      WIFI-FORSKNING.md §5–7.
-- [ ] WIFI-FORSKNING.md: §7-dubbelarkitekturen korrekt beskriven.
+      KOMMUNIKATION.md §5–7.
+- [ ] KOMMUNIKATION.md: §7-dubbelarkitekturen korrekt beskriven.
 - [ ] Stavfel/orden i översikterna korrigerade.
 - [ ] Länkarna i filerna pekar på rätt dokument.
 
@@ -197,7 +197,7 @@ del 1 i denna fil.*
 **"Varför så liten antenn i burken? Kan ni inte skicka starkare/större?"**
 > **Svar:** Burkens antenn är en monopol (omni) för att klara rotation + 30 G utan att
 > peka själv. All gain läggs på marken (12–15 dBi-yagi + gimbal), där den är laglig och
-> "gratis" (RX-gain är oreglerad). Burken håller sig under EIRP-taket, vi får 60–75 dB
+> "gratis" (RX-gain är oreglerad). Burken håller sig under EIRP-taket, vi får 60–80 dB
 > marginal på 868 MHz.
 > **Svaghet:** Nedlänken har massor av marginal, men upplänken (mark → burk) är svag
 > eftersom burkens antenn är liten — symmetrisk höghastighetsdubbelriktning saknas.
@@ -257,7 +257,7 @@ del 1 i denna fil.*
 
 **"Varför inte bara amatörradio (OH)? Det ger mer effekt."**
 > **Svar:** Amatörradio kräver licens och anropssignal — det är en annan väg vi inte behöver.
-> Vår licenfria kollektivfrekvensväg räcker gott (60–75 dB marginal) och är enklare för ett
+> Vår licenfria kollektivfrekvensväg räcker gott (60–80 dB marginal) och är enklare för ett
 > skollag.
 > **Svaghet:** Om vi ville ha riktigt hög effekt/bandbredd hade amatörbandet gett mer —
 > men det är inte vår kravbild.
@@ -291,3 +291,10 @@ del 1 i denna fil.*
 *Tips: öva att svara lugnt, erkänna svagheterna, och alltid peka på vilken mätning vi
 gjort/planerar för att stödja påståendet. Det inger förtroende hos bedömare.*
 
+---
+
+## Se även
+
+- [CANSAT-GRUND.md](CANSAT-GRUND.md), [KOMMUNIKATION.md](KOMMUNIKATION.md),
+  [PROTOKOLL.md](PROTOKOLL.md) — källorna frågorna bygger på
+- [KOSTNADER.md](KOSTNADER.md) — budgeten som kritiken ofta gäller

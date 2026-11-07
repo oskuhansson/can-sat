@@ -295,3 +295,12 @@ kräver eget RF-kort — räkna ~$25–33/enhet färdig.
 ---
 
 *Levande dokument. Uppdatera när protokollvalet är fastställt och verifierat i fält.*
+
+---
+
+## Se även
+
+- [KOMMUNIKATION.md](KOMMUNIKATION.md) — länkbudgeten för valt band (§5.2)
+- [BEAMFORMING.md](BEAMFORMING.md) — varför 2,4 GHz är bättre för arrayer
+- [FASVAXLARE.md](FASVAXLARE.md) — komponenterna som arrayen kräver
+- [KOSTNADER.md](KOSTNADER.md) — radio- och modulkostnad
