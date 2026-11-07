@@ -8,7 +8,7 @@ updated: 2026-11-07
 
 *Sammanställd 2026-11-03. Syfte: en kompakt, nybörjarvänlig introduktion till vad en
 CanSat är och allt ett nytt lag bör veta innan de börjar bygga. Bygger på fakta i
-[arkiv/CLOUD-CHAMBER.md](arkiv/CLOUD-CHAMBER.md) och denna fil.*
+[arkiv/CLOUD-CHAMBER.md](../arkiv/CLOUD-CHAMBER.md) och denna fil.*
 
 ---
 
@@ -166,7 +166,7 @@ denna fil. Kortversion:
 - [Finska CanSat-guiden (regler, PLR, 4,5 cm, antenner)](https://www.esero.fi/finnish-cansat-competition-guidelines)
 - [ESA – What is a CanSat](https://education.esa.int/what_is_a_cansat/)
 - [ESERO Luxemburg – CanSat Teams Manual (4 h-batteri, detaljer)](https://www.esero.lu/wp-content/uploads/2026/02/Teams-Manual-2025-2026-Luxembourg-CanSat-Competition-v3.pdf)
-- Projektets egna: [arkiv/CLOUD-CHAMBER.md](arkiv/CLOUD-CHAMBER.md) (cloud chamber, arkiv),
+- Projektets egna: [arkiv/CLOUD-CHAMBER.md](../arkiv/CLOUD-CHAMBER.md) (cloud chamber, arkiv),
   denna fil (kommunikation), [RADIOTEKNIK.md](RADIOTEKNIK.md) (radio-snabbkurs)
 
 ---

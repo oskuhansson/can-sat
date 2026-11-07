@@ -8,7 +8,7 @@ updated: 2026-11-07
 
 *Detta är utdrag ur den tidigare forskningsöversikten, sparat för referens. Innehållet beskriver de **övergivna** spåren: WiFi-hotspot i burken och bent-pipe-relä. Fysiken och regulatoriken är fortfarande användbar bakgrund.*
 
-Se [../KOMMUNIKATION.md](../KOMMUNIKATION.md) för den aktuella designen.
+Se [../KOMMUNIKATION.md](../dokument/KOMMUNIKATION.md) för den aktuella designen.
 
 ---
 

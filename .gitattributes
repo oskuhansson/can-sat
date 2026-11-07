@@ -1,0 +1,9 @@
+# Normalisera radslut sa diffs blir rena mellan Windows och GitHub
+* text=auto eol=lf
+
+# Binara filer - ror inte
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.zip binary

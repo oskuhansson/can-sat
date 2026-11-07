@@ -623,13 +623,13 @@ Modellen är en **kompakt, centrerad U-fork** där elevationsaxeln sitter direkt
 ### 1. Renderingar
 
 #### Isometrisk vy (assembly)
-![ASM_Gimbal isometrisk](<asm_clean.png>)
+![ASM_Gimbal isometrisk](<../bilder/asm_clean.png>)
 
 #### Framifrån — låg profil
-![ASM_Gimbal front](<asm_front.png>)
+![ASM_Gimbal front](<../bilder/asm_front.png>)
 
 #### Närbild: riktiga ISO 4762-skruvar i bomvaggan
-![Fäste med riktiga skruvar](<bolts_zoom.png>)
+![Fäste med riktiga skruvar](<../bilder/bolts_zoom.png>)
 
 ---
 
@@ -693,8 +693,8 @@ Funktionen `Gimbal CAD Plan V2` i `Feature Studio 1` har två parametrar:
 
 ### 6. Källkod
 
-* [GimbalCADv2.fs](GimbalCADv2.fs) — FeatureScript för hela modellen inklusive fästelementsbibliotek
-* [make_compact_clean.js](make_compact_clean.js) — generator för basgeometrin
+* [GimbalCADv2.fs](../cad/GimbalCADv2.fs) — FeatureScript för hela modellen inklusive fästelementsbibliotek
+* [make_compact_clean.js](../cad/make_compact_clean.js) — generator för basgeometrin
 
 Regenereringstatus i Onshape: **OK**, 0 fel, 0 namnlösa kroppar.
 

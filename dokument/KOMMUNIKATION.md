@@ -11,7 +11,7 @@ updated: 2026-11-07
 gimbal** som följer burken (GPS + RSSI). Hela lösningens tyngd ligger på marken; burken
 är minimal och robust med plats för sensorer. Dokumentet började som en
 WiFi-hotspot/relä-undersökning — de delarna är arkiverade i
-[arkiv/KOMMUNIKATION-HISTORIK.md](arkiv/KOMMUNIKATION-HISTORIK.md).*
+[arkiv/KOMMUNIKATION-HISTORIK.md](../arkiv/KOMMUNIKATION-HISTORIK.md).*
 
 ---
 
@@ -46,7 +46,7 @@ WiFi-hotspot/relä-undersökning — de delarna är arkiverade i
 
 > **Var hittar jag vad?** Detta dokument beskriver den **aktuella designen**.
 > Äldre bakgrund (WiFi-hotspot-idén, relä-konceptet, massbudget) finns i
-> [arkiv/KOMMUNIKATION-HISTORIK.md](arkiv/KOMMUNIKATION-HISTORIK.md).
+> [arkiv/KOMMUNIKATION-HISTORIK.md](../arkiv/KOMMUNIKATION-HISTORIK.md).
 > Grundbegrepp finns i [RADIOTEKNIK.md](RADIOTEKNIK.md).
 
 ---

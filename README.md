@@ -14,18 +14,31 @@ Sekundärmission: **muondetektor** (scintillator + SiPM).
 
 ---
 
+## Mappstruktur
+
+```
+/
+├── README.md      ← den här filen (ingång)
+├── dokument/      ← forskning och design (10 dokument)
+├── bilder/        ← CAD-renderingar
+├── cad/           ← FeatureScript + generator för gimbalmodellen
+└── arkiv/         ← övergivna spår, sparas för referens
+```
+
+---
+
 ## Börja här
 
 Läs i den här ordningen om du är ny i projektet:
 
 | # | Fil | Vad den ger dig |
 |---|---|---|
-| 1 | **[CANSAT-GRUND.md](CANSAT-GRUND.md)** | Vad en CanSat är, regler, flygprofil, deadlines, moduler |
-| 2 | **[RADIOTEKNIK.md](RADIOTEKNIK.md)** | Radio-grunder: SNR, Eb/N₀, modulering, LoRa vs WiFi |
-| 3 | **[KOMMUNIKATION.md](KOMMUNIKATION.md)** | **Huvuddokumentet** — länkbudget, regler, antennval, polarisation |
-| 4 | **[PROTOKOLL.md](PROTOKOLL.md)** | Vilket radioprotokoll vi väljer (LoRa / 2,4 GHz / BLE) |
-| 5 | **[GIMBAL.md](GIMBAL.md)** | Markgimbalen — byggplan och CAD |
-| 6 | **[MUONDETEKTOR.md](MUONDETEKTOR.md)** | Sekundärmissionen |
+| 1 | **[CANSAT-GRUND.md](dokument/CANSAT-GRUND.md)** | Vad en CanSat är, regler, flygprofil, deadlines, moduler |
+| 2 | **[RADIOTEKNIK.md](dokument/RADIOTEKNIK.md)** | Radio-grunder: SNR, Eb/N₀, modulering, LoRa vs WiFi |
+| 3 | **[KOMMUNIKATION.md](dokument/KOMMUNIKATION.md)** | **Huvuddokumentet** — länkbudget, regler, antennval, polarisation |
+| 4 | **[PROTOKOLL.md](dokument/PROTOKOLL.md)** | Vilket radioprotokoll vi väljer (LoRa / 2,4 GHz / BLE) |
+| 5 | **[GIMBAL.md](dokument/GIMBAL.md)** | Markgimbalen — byggplan och CAD |
+| 6 | **[MUONDETEKTOR.md](dokument/MUONDETEKTOR.md)** | Sekundärmissionen |
 
 ---
 
@@ -33,10 +46,10 @@ Läs i den här ordningen om du är ny i projektet:
 
 | Fil | Innehåll |
 |---|---|
-| **[BEAMFORMING.md](BEAMFORMING.md)** | Beamforming: metoder, hårdvara, matematik (styrvektor, Capon, MUSIC) |
-| **[FASVAXLARE.md](FASVAXLARE.md)** | Fasväxlare för 868 MHz och 2,4 GHz — vilka fungerar, priser, varningar |
-| **[KOSTNADER.md](KOSTNADER.md)** | Hela budgeten mot taket ≤ 500 € |
-| **[QA.md](QA.md)** | Kunskapsquiz, faktakontroll och svar på tuff kritik |
+| **[BEAMFORMING.md](dokument/BEAMFORMING.md)** | Beamforming: metoder, hårdvara, matematik (styrvektor, Capon, MUSIC) |
+| **[FASVAXLARE.md](dokument/FASVAXLARE.md)** | Fasväxlare för 868 MHz och 2,4 GHz — vilka fungerar, priser, varningar |
+| **[KOSTNADER.md](dokument/KOSTNADER.md)** | Hela budgeten mot taket ≤ 500 € |
+| **[QA.md](dokument/QA.md)** | Kunskapsquiz, faktakontroll och svar på tuff kritik |
 
 ---
 

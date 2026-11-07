@@ -202,7 +202,7 @@ WiFi-station/livevideo; för vår ESP-NOW + LoRa-lösning räcker ESP32.*
 - **Verktyg/maskiner (F) delas** ofta mellan gruppens lag → kan kvitta ut i verklig
   kostnad per lag.
 - **Cloud chamber (om sekundärmission väljs):** egenbyggd passiv kylplatta ~60 € eller
-  färdigt kit ~150 €+ — se [arkiv/CLOUD-CHAMBER.md](arkiv/CLOUD-CHAMBER.md) §2. Det är en separat post om man
+  färdigt kit ~150 €+ — se [arkiv/CLOUD-CHAMBER.md](../arkiv/CLOUD-CHAMBER.md) §2. Det är en separat post om man
   väljer det, men **inryms i 500 €-taket** med sparsam grundversion.
 - **Uppdatera mot faktura:** fyll i verkliga priser vartefter man köper; kontrollera att
   totalsumman håller sig ≤ 500 € innan Pre-Launch Report (20.2.2027).
