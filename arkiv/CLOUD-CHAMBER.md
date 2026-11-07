@@ -1,3 +1,9 @@
+---
+tags: [cansat, arkiv, cloud-chamber]
+status: arkiv
+updated: 2026-11-07
+---
+
 # Cloud chamber i CanSat — forskningsöversikt
 
 *Sammanställd 2026-11-02. Syfte: kartlägga fysikaliska krav, regelverk och tekniska
