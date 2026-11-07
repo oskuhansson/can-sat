@@ -31,10 +31,19 @@ driven av [ESERO Finland](https://www.esero.fi) (i samarbete med ESA).
 
 ## 2. Hur en CanSat-flygning går till (flygprofilen)
 
-```
- Raketlyft → utkast → fallskärm löses → friskt fall ~1 km → mätning → landning → återfinn
-   ~0 m      ~750–1100 m      lösgör             8–11 m/s           ~0 m
-              (apogeum)                     (mätfönster ~70–120 s)
+```mermaid
+flowchart TB
+    T0(["T+0 uppskjutning"])
+    BOOST["Stigning<br/>~30 G i 2–3 s"]
+    APOGEE["Apogeum<br/>750–1100 m"]
+    DESCENT["Nedfart<br/>5–12 m/s i 70–120 s"]
+    LAND(["Landning"])
+    RECOVER(["Bärgning"])
+    T0 -->|"motorbrand"| BOOST
+    BOOST -->|"utkast"| APOGEE
+    APOGEE -->|"fallskärm löses"| DESCENT
+    DESCENT --> LAND
+    LAND --> RECOVER
 ```
 
 - **Apogeum (högsta höjd):** 750 m (2026, H219-motor) till 900–1100 m (2024–25).

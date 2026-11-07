@@ -104,9 +104,21 @@ När en muon passerar scintillatorn exciterar den molekyler som sedan sänder ut
 **ljusblixtar (scintillation**lysch). Fotomultiplikatorn (PMT) eller kiselfotomultiplikatorn
 (SiPM) omvandlar ljuset till en **elektrisk puls** — varje puls ≈ en muon.
 
-```
- muon → plastscintillator → ljusblixt → PMT/SiPM → förstärkare → pulsräknare
-                                                       (diskriminator)
+```mermaid
+flowchart LR
+    MUON(("Muon"))
+    SCINT["Plastscintillator"]
+    SIPM["PMT eller SiPM"]
+    AMP["Förstärkare"]
+    DISC["Diskriminator"]
+    MCU["ESP32<br/>pulsräknare"]
+    TLM(["Telemetri<br/>pulser/s"])
+    MUON -->|"passerar"| SCINT
+    SCINT -->|"ljusblixt"| SIPM
+    SIPM -->|"elektrisk puls"| AMP
+    AMP -->|"förstärkt puls"| DISC
+    DISC -->|"digital puls"| MCU
+    MCU -->|"räkning"| TLM
 ```
 
 #### 4.2 Komponentval
