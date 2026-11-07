@@ -22,6 +22,7 @@ Sekundärmission: **muondetektor** (scintillator + SiPM).
 ├── dokument/      ← forskning och design (13 dokument)
 ├── bilder/        ← CAD-renderingar
 ├── cad/           ← FeatureScript + generator för gimbalmodellen
+├── sim/           ← Python-simulering av länk och pekning
 └── arkiv/         ← övergivna spår, sparas för referens
 ```
 
@@ -53,6 +54,7 @@ Läs i den här ordningen om du är ny i projektet:
 | **[FASVAXLARE.md](dokument/FASVAXLARE.md)** | Fasväxlare för 868 MHz och 2,4 GHz — vilka fungerar, priser, varningar |
 | **[KOSTNADER.md](dokument/KOSTNADER.md)** | Hela budgeten mot taket ≤ 500 € |
 | **[QA.md](dokument/QA.md)** | Kunskapsquiz, faktakontroll och svar på tuff kritik |
+| **[sim/README.md](sim/README.md)** | **Simulering** — pekfel, paketförlust och duty cycle över tid. Generisk modell, egna scenarier i JSON |
 
 ---
 
@@ -120,6 +122,7 @@ datahastighet — men **ingen duty-cycle-gräns** (mot 1 % på 868 MHz).
 - [x] Forskning: polarisation och mönsternolla (KOMMUNIKATION, del 3)
 - [x] CAD: markgimbal i Onshape (GIMBAL)
 - [x] Dokumentation: kopplingsschema i Mermaid (KOPPLING)
+- [x] Simulering: pekfel och paketförlust över tid (sim/)
 - [ ] **Kontakta ESERO Finland** (registrering, antennregler, frekvensplan)
 - [ ] Inköp: MAPS-010144 ×4 (bara 38 i lager — bråttom), LNA, radio
 - [ ] Prototyp: LoRa-beacon + markgimbal-tracker (RSSI + GPS)

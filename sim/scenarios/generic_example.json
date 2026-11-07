@@ -1,0 +1,62 @@
+{
+  "name": "radiosond_433",
+  "description": "Inte CanSat: en radiosond som faller fran 3 km pa 433 MHz med rundstrålande markantenn. Syftet med filen är att bevisa att simuleringen inte är CanSat-specifik — annat band, annan antennmodell, ingen vegetation, ingen riktverkan.",
+  "seed": 424242,
+  "time_step_s": 0.2,
+  "trajectory": {
+    "start_position_m": [500.0, 1500.0, 3000.0],
+    "descent_rate_mps": 25.0,
+    "wind_mps": [8.0, -3.0],
+    "stop_altitude_m": 0.0,
+    "max_duration_s": 400.0
+  },
+  "station": {
+    "position_m": [0.0, 0.0, 0.0],
+    "antenna_height_m": 10.0
+  },
+  "radio": {
+    "frequency_mhz": 433.0,
+    "tx_power_dbm": 10.0,
+    "tx_antenna_gain_dbi": 4.0,
+    "rx_stages": [
+      { "name": "RG-58 3 m", "gain_db": -1.5, "noise_figure_db": 1.5 }
+    ],
+    "receiver_noise_figure_db": 3.0,
+    "modulation": "lora_sf7_bw125"
+  },
+  "antenna": {
+    "model": "isotropic",
+    "peak_gain_dbi": 0.0
+  },
+  "propagation": {
+    "vegetation": {
+      "gamma_db_per_m": 0.0,
+      "a_max_db": 0.0,
+      "foliage_depth_m": 0.0,
+      "foliage_top_m": 0.0
+    },
+    "shadowing": { "sigma_db": 6.0, "correlation": 0.9 },
+    "multipath": { "model": "none" }
+  },
+  "gimbal": {
+    "az_slew_deg_per_s": 1.0,
+    "el_slew_deg_per_s": 1.0,
+    "resolution_deg": 1.0,
+    "backlash_deg": 2.0,
+    "min_elevation_deg": 0.0,
+    "max_elevation_deg": 90.0
+  },
+  "tracker": {
+    "gps_available": true,
+    "gps_horizontal_sigma_m": 15.0,
+    "gps_vertical_sigma_m": 25.0,
+    "lock_delay_s": 1.0,
+    "park_az_deg": 0.0,
+    "park_el_deg": 45.0,
+    "scan_dwell_s": 0.5
+  },
+  "packet": {
+    "interval_s": 2.0,
+    "payload_bytes": 12
+  }
+}

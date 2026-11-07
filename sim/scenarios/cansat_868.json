@@ -1,0 +1,67 @@
+{
+  "name": "cansat_868",
+  "description": "CanSat 868 MHz. LoRa SF9/125 kHz, 25 mW e.r.p., 15 dBi yagi pa 2-axlig gimbal, GPS-styrd tracker med RSSI-finjustering. LNA + 10 dB pad i mottagarkedjan.",
+  "seed": 20270311,
+  "time_step_s": 0.1,
+  "trajectory": {
+    "start_position_m": [0.0, 200.0, 1100.0],
+    "descent_rate_mps": 10.0,
+    "wind_mps": [3.0, 1.0],
+    "stop_altitude_m": 0.0,
+    "max_duration_s": 300.0
+  },
+  "station": {
+    "position_m": [0.0, 0.0, 0.0],
+    "antenna_height_m": 2.0
+  },
+  "radio": {
+    "frequency_mhz": 868.0,
+    "eirp_dbm": 16.1,
+    "rx_stages": [
+      { "name": "U.FL 5 cm", "gain_db": -0.2, "noise_figure_db": 0.2 },
+      { "name": "LNA TQP3M9037", "gain_db": 25.3, "noise_figure_db": 0.4 },
+      { "name": "LMR-400 10 m", "gain_db": -1.28, "noise_figure_db": 1.28 },
+      { "name": "10 dB pad", "gain_db": -10.0, "noise_figure_db": 10.0 }
+    ],
+    "receiver_noise_figure_db": 6.0,
+    "modulation": "lora_sf9_bw125",
+    "duty_cycle_limit": 0.01
+  },
+  "antenna": {
+    "model": "gaussian",
+    "peak_gain_dbi": 15.0,
+    "beamwidth_3db_deg": 48.4,
+    "backlobe_db": -25.0
+  },
+  "propagation": {
+    "vegetation": {
+      "gamma_db_per_m": 0.17,
+      "a_max_db": 26.5,
+      "foliage_depth_m": 40.0,
+      "foliage_top_m": 20.0
+    },
+    "shadowing": { "sigma_db": 4.0, "correlation": 0.95 },
+    "multipath": { "model": "none" }
+  },
+  "gimbal": {
+    "az_slew_deg_per_s": 30.0,
+    "el_slew_deg_per_s": 30.0,
+    "resolution_deg": 0.1,
+    "backlash_deg": 0.5,
+    "min_elevation_deg": 0.0,
+    "max_elevation_deg": 90.0
+  },
+  "tracker": {
+    "gps_available": true,
+    "gps_horizontal_sigma_m": 5.0,
+    "gps_vertical_sigma_m": 8.0,
+    "lock_delay_s": 2.0,
+    "park_az_deg": 0.0,
+    "park_el_deg": 60.0,
+    "scan_dwell_s": 0.4
+  },
+  "packet": {
+    "interval_s": 0.5,
+    "payload_bytes": 20
+  }
+}

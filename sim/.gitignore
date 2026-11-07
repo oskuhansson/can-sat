@@ -1,0 +1,4 @@
+# Genererad utdata — kör om den med run.py
+out/
+__pycache__/
+*.pyc
