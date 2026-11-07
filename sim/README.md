@@ -323,6 +323,78 @@ den kommer helt från att elementmönstret slipper se 85° från bredsidan.
 Det som återstår som hybridens verkliga fördel är tid: den låser på 0,3 s mot
 yagin 2,0 s (GPS) och 35 s (utan GPS, 17,5°-lob).
 
+---
+
+### Burkens attityd — monopolen har noll mot både zenit och nadir
+
+Burkens antenn är en monopol, och dess mönster beror på vinkeln θ mellan
+**antennaxeln** och riktningen till markstationen:
+
+$$G(\theta) = G_{max} + 10\log_{10}(\sin^2\theta)$$
+
+Nollan sitter på **båda** sidor om axeln (θ = 0 och θ = 180°). Vid apogeum står
+markstationen nästan rakt under burken, alltså θ ≈ 170–180° — **i nollan**. För
+standardbanan (1100 m höjd, 200 m horisontellt) är elevationen 79,7°, vilket ger
+θ = 169,7° och **−14,9 dB**. Det är kontrollsumman modellen verifieras mot.
+
+Förlusten är som störst där avståndet är som kortast, och den **försvinner nedåt**:
+när burken kommer ner ligger stationen nära horisonten, θ ≈ 90°, sin²θ = 1.
+
+#### Fällan: E-vektorn är inte axeln
+
+En monopol strålar med E längs **θ̂**, som är vinkelrät mot utbredningsriktningen
+— inte längs axeln. Sätter man E = axeln blir en vertikal monopol "korspolariserad"
+mot en antenn som pekar rakt upp, och man får ~15 dB extra vid apogeum. Men det är
+**samma** geometriska nolla som `sin²θ` redan räknar, så förlusten blir dubbelt så
+stor som den är. Modellen använder tvärkomponenten, och då blir polarisationen
+**0,00 dB** för en vertikal monopol mot en vertikalt polariserad yagi som pekar rätt
+— vilket är det svar man ska förvänta sig.
+
+Fysiken är värd att notera: för en *vertikalt* polariserad mottagare blir den
+totala dämpningen `sin⁴θ`, eftersom fältets amplitud går som `sinθ` och
+polarisationsprojektionen en gång till. Vid apogeum är det **−29,8 dB**, inte −14,9.
+
+#### Tre scenarier
+
+`attitude`-blocket styr modellen: `tilt_amplitude_deg` + `tilt_rate_hz` (axeln
+lutar och sveper runt), `spin_rate_hz` (rotation kring egen axel — **no-op** för
+en monopol, eftersom både mönstret och E-vektorn är rotationssymmetriska kring
+den), `ground_polarization` (`vertical`/`horizontal`) och `floor_db`.
+
+| Scenario | `tilt` | Attityd medel/sämst | Polarisation medel | Sämsta marginal |
+|---|---|---|---|---|
+| `..._att_still` | 0° | 6,58 / **14,93** dB | 0,00 dB | 19,3 dB |
+| `..._att_gentle` | ±10° @ 0,5 Hz | 6,52 / **20,00** dB | 0,73 dB | 7,2 dB |
+| `..._att_worst` | ±30° @ 1 Hz | 4,52 / 18,09 dB | 3,61 dB | 3,6 dB |
+
+Pendlingen når **djupare** i nollan än den statiska vertikalen (axeln kan passera
+närmare exakt nadir) men kostar mindre i **medel**, eftersom axeln bara är i
+nollan en del av tiden.
+
+#### Vad det betyder
+
+Attitydförlusten är **större än hela markantennfrågan**: 4,5–6,6 dB i medel, mot
+3,8 dB skillnad i förstärkning mellan hybrid och yagi.
+
+Och den får 2,4 GHz att tappa paket. Med modellen på plats, 10 seeds:
+
+| Scenario | Förlust | Sämsta marginal |
+|---|---|---|
+| 868 yagi (GPS / utan) | 0,00 % / 0,00 % | 17,2 / 14,9 dB |
+| **2,4 yagi, GPS** | **0,63 %** | **−7,7 dB** |
+| **2,4 yagi, utan GPS** | **11,81 %** | **−15,6 dB** |
+| 2,4 array utan gimbal | 0,14 % | −8,6 dB |
+| 2,4 hybrid (GPS / utan) | 0,00 % / 0,00 % | 18,3 / 18,5 dB |
+
+Tappen ligger i de första sekunderna, t = 2–5 s, då elevationen är ~79°: nollan
+(**−14,9 dB**) och korspolarisationen (**−14,6 dB** när antennen pekar mot
+horisonten i stället för mot burken) samverkar. 868 klarar sig på sin marginal,
+och hybriden klarar sig därför att den har mer marginal i apogeum.
+
+**Slutsatsen är att burkens orientering är en större förlustkälla än
+markantennen** — och att den slår mot 2,4 GHz just i apogeum, där ingen hade
+tittat.
+
 Parametrarna samlas in med `study.py` (30 seeds per punkt):
 
 ```

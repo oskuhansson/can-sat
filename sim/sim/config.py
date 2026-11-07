@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -456,6 +456,57 @@ class PacketConfig:
 
 
 @dataclass(frozen=True)
+class AttitudeConfig:
+    """Burkens orientering. Antennaxeln är burkens längdaxel.
+
+    Monopolen har **noll både mot zenit och mot nadir** (`sin²θ` är symmetrisk
+    kring θ = 0 och θ = 180°). Vid apogeum står markstationen nästan rakt under
+    burken, alltså θ ≈ 170-180° — i nollan. Det är därför orienteringen spelar
+    roll, och därför den inte får antas vara vertikal.
+
+    `tilt_amplitude_deg` + `tilt_rate_hz` beskriver pendlingen/precessionen under
+    fallskärmen: axeln lutar `tilt_amplitude_deg` från vertikalen och sveper runt
+    med `tilt_rate_hz`. `spin_rate_hz` är rotationen kring den egna axeln; för en
+    monopol, vars polarisation ligger **längs** axeln, ändrar den ingenting —
+    den påverkar bara en antenn vars polarisation står vinkelrätt mot axeln.
+
+    `ground_polarization` är markantennens polarisation. En vertikal monopol mot
+    en horisontellt polariserad yagi är korspolariserad och tappar i praktiken
+    hela signalen, så det måste vara ett medvetet val.
+    """
+
+    tilt_amplitude_deg: float = 0.0
+    tilt_rate_hz: float = 0.5
+    spin_rate_hz: float = 0.0
+    phase_deg: float = 0.0
+    ground_polarization: str = "vertical"
+    floor_db: float = -20.0
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AttitudeConfig":
+        _check_keys(cls, data)
+        pol = str(data.get("ground_polarization", "vertical"))
+        if pol not in ("vertical", "horizontal"):
+            raise ConfigError(
+                f"attitude.ground_polarization: okänd '{pol}' (vertical|horizontal)"
+            )
+        tilt = float(data.get("tilt_amplitude_deg", 0.0))
+        if not 0.0 <= tilt <= 90.0:
+            raise ConfigError("attitude.tilt_amplitude_deg måste ligga i 0..90")
+        floor = float(data.get("floor_db", -20.0))
+        if floor > 0.0:
+            raise ConfigError("attitude.floor_db måste vara negativ")
+        return cls(
+            tilt_amplitude_deg=tilt,
+            tilt_rate_hz=float(data.get("tilt_rate_hz", 0.5)),
+            spin_rate_hz=float(data.get("spin_rate_hz", 0.0)),
+            phase_deg=float(data.get("phase_deg", 0.0)),
+            ground_polarization=pol,
+            floor_db=floor,
+        )
+
+
+@dataclass(frozen=True)
 class Scenario:
     name: str
     description: str
@@ -468,6 +519,7 @@ class Scenario:
     gimbal: GimbalConfig
     tracker: TrackerConfig
     packet: PacketConfig
+    attitude: AttitudeConfig = field(default_factory=AttitudeConfig)
     seed: int = 0
 
     @classmethod
@@ -485,6 +537,7 @@ class Scenario:
             gimbal=GimbalConfig.from_dict(data.get("gimbal", {})),
             tracker=TrackerConfig.from_dict(data.get("tracker", {})),
             packet=PacketConfig.from_dict(data.get("packet", {})),
+            attitude=AttitudeConfig.from_dict(data.get("attitude", {})),
             seed=int(data.get("seed", 0)),
         )
 

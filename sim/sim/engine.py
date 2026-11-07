@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from . import linkbudget, modulation, propagation
+from . import attitude, linkbudget, modulation, propagation
 from .antenna import AntennaPattern, make_pattern
 from .config import Scenario
 from .geometry import (
@@ -50,6 +50,8 @@ class Step:
     el_gimbal_deg: float
     pointing_error_deg: float
     rx_gain_dbi: float
+    can_attitude_db: float
+    polarization_db: float
     fspl_db: float
     vegetation_db: float
     multipath_db: float
@@ -177,8 +179,30 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
         )
         shadow_db = shadowing.step()
 
+        # Burkens orientering. Monopolen har noll både mot zenit och mot nadir,
+        # och vid apogeum står stationen nästan rakt under burken — alltså i
+        # nollan. Det är en förlust som är som störst där avståndet är som
+        # kortast, och som försvinner nedåt då stationen ligger nära horisonten.
+        dx = station[0] - position[0]
+        dy = station[1] - position[1]
+        dz = station[2] - position[2]
+        rng_dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+        to_station = (dx / rng_dist, dy / rng_dist, dz / rng_dist)
+        axis = attitude.axis_vector(t, scenario.attitude)
+        att_db = attitude.pattern_loss_db(axis, to_station, scenario.attitude.floor_db)
+        boresight = attitude.unit_from_az_el(az_gimbal, el_gimbal)
+        pol_db = attitude.polarization_loss_db(
+            axis, to_station, az_gimbal, el_gimbal, scenario.attitude
+        )
+
+        # Attityd och polarisation är antenneffekter, så de läggs på
+        # antennförstärkningen. `rx_gain_dbi` behåller markantennens egen vinst
+        # så att pekförlusten kan redovisas separat.
         rx_power = linkbudget.received_power_dbm(
-            scenario.radio.eirp_dbm, losses["path_loss_db"], rx_gain, shadow_db
+            scenario.radio.eirp_dbm,
+            losses["path_loss_db"],
+            rx_gain + att_db + pol_db,
+            shadow_db,
         )
         margin = linkbudget.margin_db(rx_power, sensitivity)
         per = modulation.packet_error_rate(margin)
@@ -202,6 +226,8 @@ def run(scenario: Scenario, seed: int | None = None, pattern: AntennaPattern | N
                 el_gimbal_deg=el_gimbal,
                 pointing_error_deg=error,
                 rx_gain_dbi=rx_gain,
+                can_attitude_db=att_db,
+                polarization_db=pol_db,
                 fspl_db=losses["fspl_db"],
                 vegetation_db=losses["vegetation_db"],
                 multipath_db=losses["multipath_db"],
@@ -295,6 +321,13 @@ def _summarise(
     worst = min(steps, key=lambda s: s.margin_db)
     veg = [s.vegetation_db for s in steps]
 
+    # De fyra förlustkällorna redovisas var för sig, så att det syns vilken som
+    # dominerar i stället för att allt göms i en enda marginal.
+    fspl = [s.fspl_db for s in steps]
+    ground_pointing = [pattern.peak_gain_dbi - s.rx_gain_dbi for s in steps]
+    can_att = [-s.can_attitude_db for s in steps]
+    pol = [-s.polarization_db for s in steps]
+
     # Hybriden: hur ofta ligger målet utanför den elektroniska konen, så att
     # arrayen klämmer vid max_scan och gimbalen måste flytta? Och hur stor blir
     # scanförlusten av att elementet inte pekar rakt fram?
@@ -340,6 +373,18 @@ def _summarise(
         "margin_mean_db": sum(margins) / len(margins),
         "margin_below_zero_fraction": sum(1 for m in margins if m < 0) / len(margins),
         "vegetation_max_db": max(veg),
+        # De fyra förlustkällorna, var för sig. Attitydförlusten är den som
+        # annars göms: den är stor i apogeum och noll vid horisonten.
+        "fspl_mean_db": sum(fspl) / len(fspl),
+        "fspl_max_db": max(fspl),
+        "ground_pointing_loss_mean_db": sum(ground_pointing) / len(ground_pointing),
+        "ground_pointing_loss_max_db": max(ground_pointing),
+        "can_attitude_loss_mean_db": sum(can_att) / len(can_att),
+        "can_attitude_loss_max_db": max(can_att),
+        # Hur stor del av flygningen som ligger djupare än 10 dB i nollan.
+        "can_attitude_above_10db_fraction": sum(1 for x in can_att if x > 10.0) / len(can_att),
+        "polarization_loss_mean_db": sum(pol) / len(pol),
+        "polarization_loss_max_db": max(pol),
         "rx_gain_loss_max_db": pattern.peak_gain_dbi - min(s.rx_gain_dbi for s in steps),
         "rx_gain_loss_mean_db": pattern.peak_gain_dbi
         - (sum(s.rx_gain_dbi for s in steps) / len(steps)),

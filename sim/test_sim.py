@@ -648,10 +648,20 @@ def main() -> int:
         f"lasning {s_868_nogps['lock_time_s']:.2f} s, dwell {_dwell_868:.2f} s",
     )
     check(
-        "bakatskompatibilitet: de tre scenarierna tappar inga paket",
-        s_868_gps["loss_fraction"] < 0.02
-        and s_868_nogps["loss_fraction"] < 0.02
-        and s_24_nogps["loss_fraction"] < 0.02,
+        "bakatskompatibilitet: 868 tappar inga paket (marginalen aeter attityden)",
+        s_868_gps["loss_fraction"] < 0.02 and s_868_nogps["loss_fraction"] < 0.02,
+        f"868 GPS {100 * s_868_gps['loss_fraction']:.2f} %, "
+        f"utan {100 * s_868_nogps['loss_fraction']:.2f} %",
+    )
+    # Med attitydmodellen pa plats ar detta inte langre sant for 2,4 GHz, och det
+    # ar en av de viktigaste upptackterna: nar stationen star nastan rakt under
+    # burken ar monopolen i sin nolla (-14,9 dB) OCH den inkommande vagens E-
+    # vektor horisontell, sa en vertikal yagi som pekar at horisonten ar
+    # korspolariserad mot den (-14,9 dB till). Tillsammans ~-30 dB i apogeum.
+    check(
+        "attityd: 2,4 GHz-yagin tappar paket i apogeum (nolla + korspolarisation)",
+        s_24_nogps["loss_fraction"] > 0.05,
+        f"forlust {100 * s_24_nogps['loss_fraction']:.1f} %",
     )
 
     # 7. Hybrid — array PA gimbal
@@ -854,6 +864,116 @@ def main() -> int:
         f"hybrid {h_park_avg:.1f} dB, yagi {y_park_avg:.1f} dB, "
         f"gap {h_park_avg - y_park_avg:.1f} dB",
     )
+
+    # 8. Burkens attityd — monopolen har noll mot bade zenit och nadir
+    print()
+    print("8. Burkens attityd — monopolen har noll mot bade zenit och nadir")
+
+    from sim import attitude as _att  # noqa: PLC0415
+    from sim.config import AttitudeConfig as _AtC  # noqa: PLC0415
+
+    # Kontrollsumma: elevation 79,7 grader fran stationen ger theta = 169,7 och
+    # -14,9 dB. Det ar den siffra uppdraget angav, och den ska modellen reproducera.
+    _to_st = _att.unit_from_az_el(0.0, -79.7)
+    _axis = _att.axis_vector(0.0, _AtC())
+    _loss = _att.pattern_loss_db(_axis, _to_st, -20.0)
+    check(
+        "attityd: apogeum (elev 79,7) kostar -14,9 dB",
+        close(_loss, -14.95, 0.15),
+        f"fick {_loss:.2f} dB",
+    )
+    # Nollan sitter pa BADA sidor om axeln: rakt uppifran och rakt nedifran.
+    check(
+        "attityd: nollan ar symmetrisk (zenit och nadir ger samma forlust)",
+        close(
+            _att.pattern_loss_db((0.0, 0.0, 1.0), (0.0, 0.0, 1.0), -20.0),
+            _att.pattern_loss_db((0.0, 0.0, 1.0), (0.0, 0.0, -1.0), -20.0),
+            1e-9,
+        ),
+        "olika forlust mot zenit och nadir",
+    )
+    check(
+        "attityd: nollan klipps vid floor_db",
+        close(_att.pattern_loss_db((0.0, 0.0, 1.0), (0.0, 0.0, 1.0), -20.0), -20.0, 1e-9),
+        "klipptes inte",
+    )
+    # I horisonten (theta = 90) ar sin^2 = 1 och forlusten noll.
+    check(
+        "attityd: horisonten kostar inget",
+        close(_att.pattern_loss_db((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), -20.0), 0.0, 1e-9),
+        "forlust i horisonten",
+    )
+
+    # Polarisationen: en vertikal monopol mot en vertikalt polariserad yagi som
+    # pekar at samma hall ska ge ~0 dB. Satte man E = axeln i stallet for
+    # tvarkomponenten blev det ~-15 dB har, vilket dubbelraknade nollan.
+    _pol = _att.polarization_loss_db(_axis, _to_st, 0.0, 79.7, _AtC())
+    check(
+        "attityd: vertikal monopol mot vertikal yagi ger ~0 dB polarisation",
+        close(_pol, 0.0, 0.6),
+        f"fick {_pol:.2f} dB",
+    )
+    check(
+        "attityd: polarisationsforlusten ar aldrig positiv",
+        all(
+            _att.polarization_loss_db(_axis, _to_st, az, el, _AtC()) <= 1e-9
+            for az in (0.0, 90.0, 180.0)
+            for el in (10.0, 45.0, 80.0)
+        ),
+        "positiv forlust",
+    )
+
+    # Tre scenarier: stillastaende, snall pendling, varsta fall.
+    _att_cases = {}
+    for _f, _lab in (
+        ("cansat_24_hybrid_att_still", "still"),
+        ("cansat_24_hybrid_att_gentle", "snall"),
+        ("cansat_24_hybrid_att_worst", "varst"),
+    ):
+        _scn = load_scenario(f"scenarios/{_f}.json")
+        _rs = [run(_scn, s) for s in range(1, 6)]
+        _att_cases[_lab] = {
+            "att_mean": sum(x.summary["can_attitude_loss_mean_db"] for x in _rs) / len(_rs),
+            "att_max": sum(x.summary["can_attitude_loss_max_db"] for x in _rs) / len(_rs),
+            "pol_mean": sum(x.summary["polarization_loss_mean_db"] for x in _rs) / len(_rs),
+            "m_min": sum(x.summary["margin_min_db"] for x in _rs) / len(_rs),
+            "loss": sum(x.summary["loss_fraction"] for x in _rs) / len(_rs),
+        }
+        check(
+            f"attityd: {_lab} kor och tapper inga paket",
+            _att_cases[_lab]["loss"] < 0.02,
+            f"forlust {100 * _att_cases[_lab]['loss']:.2f} %",
+        )
+    # Pendlingen gor saken varre i *djupaste* ogonblick (axeln kan passera
+    # narmare exakt nadir an den statiska vertikalen, som ar last vid 169,7
+    # grader) men battre i *medel*, eftersom axeln da bara ar i nollan en del av
+    # tiden. Bada riktningarna ska halla.
+    check(
+        "attityd: pendlingen nar djupare an stillastaende i samsta ogonblick",
+        _att_cases["varst"]["att_max"] > _att_cases["still"]["att_max"] + 1.0,
+        f"still {_att_cases['still']['att_max']:.1f} dB mot "
+        f"varst {_att_cases['varst']['att_max']:.1f} dB",
+    )
+    check(
+        "attityd: stillastaende kostar mer i medel an pendling",
+        _att_cases["still"]["att_mean"] > _att_cases["varst"]["att_mean"] + 0.5,
+        f"still {_att_cases['still']['att_mean']:.2f} dB mot "
+        f"varst {_att_cases['varst']['att_mean']:.2f} dB",
+    )
+    check(
+        "attityd: pendling kostar mer i polarisation an stillastaende",
+        _att_cases["varst"]["pol_mean"] > _att_cases["still"]["pol_mean"] + 1.0,
+        f"still {_att_cases['still']['pol_mean']:.2f} dB mot "
+        f"varst {_att_cases['varst']['pol_mean']:.2f} dB",
+    )
+    print()
+    print("  Burkens attityd, medel over 5 seed (dB forlust):")
+    print(f"    {'scenario':10s} {'attityd':>16s} {'polarisation':>14s} {'samsta marginal':>16s}")
+    for _lab, _d in _att_cases.items():
+        print(
+            f"    {_lab:10s} {_d['att_mean']:7.2f}/{_d['att_max']:<7.2f}"
+            f" {_d['pol_mean']:>13.2f} {_d['m_min']:>15.1f}"
+        )
 
     # ------------------------------------------------------------------
     total = time.perf_counter() - started
